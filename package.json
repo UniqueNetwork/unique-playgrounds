@@ -1,0 +1,25 @@
+{
+  "name": "unique-helpers",
+  "description": "Helpers for Unique Network chain",
+  "version": "0.1",
+  "author": "Unique Network",
+  "license": "Apache 2.0",
+  "scripts": {
+    "test": "jest --config tests/misc/jest.config.json"
+  },
+  "dependencies": {
+    "@polkadot/api": "7.12.1",
+    "@polkadot/util": "8.5.1",
+    "@polkadot/util-crypto": "8.5.1",
+    "@polkadot/wasm-crypto": "4.6.1",
+    "@polkadot/keyring": "8.5.1",
+    "@polkadot/networks": "8.5.1",
+    "@unique-nft/types": "0.3.1",
+    "protobufjs": "6.11.2",
+    "form-data": "4.0.0",
+    "bignumber.js": "9.0.1"
+  },
+  "devDependencies": {
+    "jest": "27.5.1"
+  }
+}

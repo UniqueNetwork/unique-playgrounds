@@ -1,0 +1,9 @@
+{
+  "moduleFileExtensions": ["js"],
+  "rootDir": "..",
+  "testEnvironment": "node",
+  "testRegex": ".test.js$",
+  "verbose": true,
+  "resolver": "./misc/resolver",
+  "testTimeout": 60000
+}

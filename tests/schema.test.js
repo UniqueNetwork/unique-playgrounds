@@ -1,11 +1,15 @@
 const { UniqueSchemaHelper } = require('../src/lib/unique');
+const { SilentLogger, Logger } = require('../src/lib/logger');
 const { EXAMPLE_SCHEMA, EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA, EXAMPLE_DATA_HUMAN, EXAMPLE_DATA_BINARY } = require('./misc/schema.data');
+const { getConfig } = require('../src/config');
 
 describe('UniqueSchemaHelper tests', () => {
   let schemaHelper;
 
   beforeAll(() => {
-    schemaHelper = new UniqueSchemaHelper();
+    const config = getConfig();
+    const loggerCls = config.testing.silentLogger ? SilentLogger : Logger;
+    schemaHelper = new UniqueSchemaHelper(new loggerCls());
   });
 
   it('Test decodeSchema', () => {

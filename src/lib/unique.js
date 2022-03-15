@@ -362,5 +362,5 @@ class UniqueHelper {
 }
 
 module.exports = {
-  UniqueHelper, UniqueSchemaHelper
+  UniqueHelper, UniqueSchemaHelper, UniqueUtil
 };

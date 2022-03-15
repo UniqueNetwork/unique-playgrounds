@@ -1,4 +1,5 @@
 const { UniqueHelper } = require('../src/lib/unique');
+const { SilentLogger, Logger } = require('../src/lib/logger');
 const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA_BINARY } = require('./misc/schema.data');
 const { getConfig } = require('../src/config');
 
@@ -11,7 +12,8 @@ describe('Minting tests', () => {
 
   beforeAll(async () => {
     const config = getConfig();
-    uniqueHelper = new UniqueHelper();
+    const loggerCls = config.testing.silentLogger ? SilentLogger : Logger;
+    uniqueHelper = new UniqueHelper(new loggerCls());
     await uniqueHelper.connect(config.testing.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.testing.mainSeed);
   });

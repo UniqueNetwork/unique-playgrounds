@@ -15,9 +15,7 @@
     "@polkadot/keyring": "8.5.1",
     "@polkadot/networks": "8.5.1",
     "@unique-nft/types": "0.3.1",
-    "protobufjs": "6.11.2",
-    "form-data": "4.0.0",
-    "bignumber.js": "9.0.1"
+    "protobufjs": "6.11.2"
   },
   "devDependencies": {
     "jest": "27.5.1"

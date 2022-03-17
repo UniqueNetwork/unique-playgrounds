@@ -29,11 +29,11 @@ class UniqueExporter {
   }
 
   getTokensFilename(collectionId) {
-    return path.join(this.exportPath, `export_tokens_${collectionId}`);
+    return path.join(this.exportPath, `export_tokens_${collectionId}.json`);
   }
 
   getCollectionFilename(collectionId) {
-    return path.join(this.exportPath, `export_collection_${collectionId}`);
+    return path.join(this.exportPath, `export_collection_${collectionId}.json`);
   }
 
   async *genTokenData(collectionData, startToken=1) {
@@ -85,7 +85,7 @@ class UniqueExporter {
     let base = '[';
     if(fs.existsSync(filename) && !refresh) {
       base = fs.readFileSync(filename).toString();
-      if(base.endsWith('\n]')) base = '['; // force refresh
+      if(base.endsWith('\n]')) base = base.slice(0, -1);
     }
     const writeStream = fs.createWriteStream(filename, {flags: 'w'});
     writeStream.write(base);

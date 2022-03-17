@@ -1,6 +1,7 @@
 .idea
 node_modules
 package-lock.json
-src/config/*
-!src/config/global.js
-!src/config/index.js
+src/playgrounds/*.dev.js
+tests/config/*
+!tests/config/global.js
+!tests/config/index.js

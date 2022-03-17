@@ -5,7 +5,7 @@ const { UniqueHelper, UniqueSchemaHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { UniqueExporter } = require('../src/helpers/export')
 const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA} = require('./misc/schema.data');
-const { getConfig } = require('../src/config');
+const { getConfig } = require('./config');
 
 
 describe('Export helper tests', () => {
@@ -20,13 +20,13 @@ describe('Export helper tests', () => {
 
   beforeAll(async () => {
     const config = getConfig();
-    const loggerCls = config.testing.silentLogger ? SilentLogger : Logger;
+    const loggerCls = config.silentLogger ? SilentLogger : Logger;
     logger = new loggerCls();
     uniqueHelper = new UniqueHelper(logger);
-    await uniqueHelper.connect(config.testing.wsEndpoint);
+    await uniqueHelper.connect(config.wsEndpoint);
     schemaHelper = new UniqueSchemaHelper(logger);
     exporter = new UniqueExporter(uniqueHelper, schemaHelper, os.tmpdir(), logger);
-    alice = uniqueHelper.util.fromSeed(config.testing.mainSeed);
+    alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
 
   afterAll(async () => {

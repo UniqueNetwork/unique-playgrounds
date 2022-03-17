@@ -15,7 +15,8 @@ class Logger {
     ERROR: 'ERROR',
     WARNING: 'WARNING',
     INFO: 'INFO',
-    DEBUG: 'DEBUG'
+    DEBUG: 'DEBUG',
+    NONE: 'NONE'
   };
 
   static LEVEL_COLOR = {
@@ -52,7 +53,7 @@ class Logger {
   constructor(includeTime=true, defaultLevel=Logger.LEVEL.INFO) {
     this.includeTime = includeTime;
     this.defaultLevel = defaultLevel;
-    this.level = this.constructor.LEVEL;
+    this.level = JSON.parse(JSON.stringify(this.constructor.LEVEL));
   }
 
   fmtSymbol(fmt) {
@@ -74,7 +75,7 @@ class Logger {
     }
 
     let rawMsgs = Array.isArray(message) ? message : [message],
-      msgs = [`${this.constructor.LEVEL_COLOR.hasOwnProperty(level) ? this.fmt(level, this.constructor.LEVEL_COLOR[level]) : level}:`];
+      msgs = level !== this.level.NONE ? [`${this.constructor.LEVEL_COLOR.hasOwnProperty(level) ? this.fmt(level, this.constructor.LEVEL_COLOR[level]) : level}:`] : [];
     for (let msg of rawMsgs) {
       try {
         if (typeof msg !== 'string') {

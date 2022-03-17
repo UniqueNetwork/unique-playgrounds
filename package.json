@@ -1,10 +1,12 @@
 {
-  "name": "unique-helpers",
+  "name": "unique-playgrounds",
   "description": "Helpers for Unique Network chain",
   "version": "0.1",
   "author": "Unique Network",
   "license": "Apache 2.0",
   "scripts": {
+    "playground": "node cli.js run_playground",
+    "command": "node cli.js run_command",
     "test": "jest --config tests/misc/jest.config.json"
   },
   "dependencies": {
@@ -15,7 +17,8 @@
     "@polkadot/keyring": "8.5.1",
     "@polkadot/networks": "8.5.1",
     "@unique-nft/types": "0.3.1",
-    "protobufjs": "6.11.2"
+    "protobufjs": "6.11.2",
+    "web3": "1.7.1"
   },
   "devDependencies": {
     "jest": "27.5.1"

@@ -1,7 +1,7 @@
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA_BINARY } = require('./misc/schema.data');
-const { getConfig } = require('../src/config');
+const { getConfig } = require('./config');
 
 describe('Minting tests', () => {
   jest.setTimeout(60 * 60 * 1000);
@@ -12,10 +12,10 @@ describe('Minting tests', () => {
 
   beforeAll(async () => {
     const config = getConfig();
-    const loggerCls = config.testing.silentLogger ? SilentLogger : Logger;
+    const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
-    await uniqueHelper.connect(config.testing.wsEndpoint);
-    alice = uniqueHelper.util.fromSeed(config.testing.mainSeed);
+    await uniqueHelper.connect(config.wsEndpoint);
+    alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
 
   afterAll(async () => {

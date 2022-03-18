@@ -112,7 +112,116 @@ describe('Minting tests', () => {
         "metaUpdatePermission": "ItemOwner"
       }
     });
-  })
+  });
+
+  it('Burn collection', async () => {
+    let burnId = await uniqueHelper.mintNFTCollection(alice, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'});
+    let result = await uniqueHelper.burnNFTCollection(alice, burnId);
+    await expect(result).toBe(true);
+  });
+
+  it('Set collection schema version', async () => {
+    let result = await uniqueHelper.setNFTCollectionSchemaVersion(alice, collectionId, 'Unique');
+    expect(result).toBe(true);
+    try {
+      await uniqueHelper.setNFTCollectionSchemaVersion(alice, collectionId, 'NotExist', `collection #${collectionId} schemaVersion`);
+    }
+    catch(e) {
+      await expect(e.toString()).toEqual(`Error: Unable to set collection schema version for label collection #${collectionId} schemaVersion: invalid schema version "NotExist"`)
+    }
+  });
+
+  it('Set collection offchain schema', async () => {
+    let result = await uniqueHelper.setNFTCollectionOffchainSchema(alice, collectionId, 'abc');
+    await expect(result).toBe(true);
+  });
+
+  it('Set collection sponsor', async () => {
+    let bob = uniqueHelper.util.fromSeed('//Bob');
+
+    let result = await uniqueHelper.setNFTCollectionSponsor(alice, collectionId, bob.address);
+    await expect(result).toBe(true);
+
+    result = await uniqueHelper.confirmNFTCollectionSponsorship(bob, collectionId);
+    await expect(result).toBe(true);
+    try {
+      await uniqueHelper.confirmNFTCollectionSponsorship(alice, collectionId, `collection #${collectionId} sponsorship`);
+    }
+    catch(e) {
+      await expect(e.toString()).toEqual(`Error: Unable to confirm collection sponsorship for collection #${collectionId} sponsorship`)
+    }
+  });
+
+  it('Set collection limits', async () => {
+    let result = await uniqueHelper.setNFTCollectionLimits(alice, collectionId, {sponsorTransferTimeout: 0});
+    await expect(result).toBe(true);
+  });
+
+  it('Set collection constOnChainSchema', async () => {
+    let result = await uniqueHelper.setNFTCollectionConstOnChainSchema(alice, collectionId, EXAMPLE_SCHEMA_JSON);
+    await expect(result).toBe(true);
+  });
+
+  it('Set collection variableOnChainSchema', async () => {
+    let result = await uniqueHelper.setNFTCollectionVariableOnChainSchema(alice, collectionId, 'abc');
+    await expect(result).toBe(true);
+  });
+
+  it('Change collection owner', async () => {
+    let bob = uniqueHelper.util.fromSeed('//Bob');
+    let collectionId = await uniqueHelper.mintNFTCollection(alice, {name: 'to bob', description: 'collection from alice to bob', tokenPrefix: 'atb'});
+
+    let collection = await uniqueHelper.getCollection(collectionId);
+    await expect(uniqueHelper.util.normalizeSubstrateAddress(collection.raw.owner)).toEqual(alice.address);
+
+    let result = await uniqueHelper.changeNFTCollectionOwner(alice, collectionId, bob.address);
+    await expect(result).toBe(true);
+
+    collection = await uniqueHelper.getCollection(collectionId);
+    await expect(uniqueHelper.util.normalizeSubstrateAddress(collection.raw.owner)).toEqual(bob.address);
+  });
+
+  it('Add and remove collection admin', async () => {
+    let bob = uniqueHelper.util.fromSeed('//Bob');
+    let charlie = uniqueHelper.util.fromSeed('//Charlie');
+    let collection, result;
+
+    const normalizeAdmins = collection => {
+      let normalized = [];
+      for(let admin of collection.admins) {
+        normalized.push(uniqueHelper.util.normalizeSubstrateAddress(admin.Substrate))
+      }
+      return normalized;
+    }
+
+    collection = await uniqueHelper.getCollection(collectionId);
+    await expect(collection.admins).toEqual([]);
+
+    result = await uniqueHelper.addNFTCollectionAdmin(alice, collectionId, {Substrate: bob.address});
+    await expect(result).toBe(true);
+
+    collection = await uniqueHelper.getCollection(collectionId);
+    await expect(normalizeAdmins(collection)).toEqual([bob.address]);
+
+    result = await uniqueHelper.addNFTCollectionAdmin(alice, collectionId, {Substrate: charlie.address});
+    await expect(result).toBe(true);
+
+    collection = await uniqueHelper.getCollection(collectionId);
+    await expect(normalizeAdmins(collection)).toEqual([bob.address, charlie.address]);
+
+    result = await uniqueHelper.removeNFTCollectionAdmin(alice, collectionId, {Substrate: charlie.address});
+    await expect(result).toBe(true);
+
+    collection = await uniqueHelper.getCollection(collectionId);
+    await expect(normalizeAdmins(collection)).toEqual([bob.address]);
+
+    result = await uniqueHelper.removeNFTCollectionAdmin(alice, collectionId, {Substrate: bob.address});
+    await expect(result).toBe(true);
+
+    collection = await uniqueHelper.getCollection(collectionId);
+    await expect(collection.admins).toEqual([]);
+  });
+
 
   it('Mint token', async () => {
     const result = await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, constData: EXAMPLE_DATA_BINARY});

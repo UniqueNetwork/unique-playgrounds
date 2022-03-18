@@ -98,6 +98,20 @@ class UniqueUtil {
     });
     return {success, tokens};
   }
+
+  static findCollectionInEvents(events, collectionId, expectedSection, expectedMethod, label) {
+    let eventId = null;
+    events.forEach(({event: {data, method, section}}) => {
+      if ((section === expectedSection) && (method === expectedMethod)) {
+        eventId = parseInt(data[0].toString(), 10);
+      }
+    });
+
+    if (eventId === null) {
+      throw Error(`No ${expectedMethod} event for ${label}`);
+    }
+    return eventId === collectionId;
+  }
 }
 
 
@@ -298,6 +312,152 @@ class UniqueHelper {
       transactionLabel
     );
     return this.util.extractCollectionIdFromCreationResult(creationResult, label);
+  }
+
+  async burnNFTCollection(signer, collectionId, label='collection to burn', transactionLabel='api.tx.destroyCollection') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.destroyCollection(collectionId),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to burn collection for ${label}`);
+    }
+
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionDestroyed', label);
+  }
+
+  async setNFTCollectionSchemaVersion(signer, collectionId, schemaVersion, label='schema version', transactionLabel='api.tx.unique.setSchemaVersion') {
+    let result;
+    try {
+      result = await this.signTransaction(
+        signer,
+        this.api.tx.unique.setSchemaVersion(collectionId, schemaVersion),
+        transactionLabel
+      );
+    }
+    catch(e) {
+      if(e.toString().indexOf('Cannot map Enum JSON') > -1) throw Error(`Unable to set collection schema version for label ${label}: invalid schema version "${schemaVersion}"`);
+    }
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection schema version for ${label}`);
+    }
+
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SchemaVersionSet', label);
+  }
+
+  async setNFTCollectionOffchainSchema(signer, collectionId, offchainSchema, label='offchain schema', transactionLabel='api.tx.unique.setOffchainSchema') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setOffchainSchema(collectionId, offchainSchema),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection offchain schema for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'OffchainSchemaSet', label);
+  }
+
+  async setNFTCollectionSponsor(signer, collectionId, sponsorAddress, label='sponsor', transactionLabel='api.tx.unique.setCollectionSponsor') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setCollectionSponsor(collectionId, sponsorAddress),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection sponsor for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionSponsorSet', label);
+  }
+
+  async confirmNFTCollectionSponsorship(signer, collectionId, label='confirm sponsorship', transactionLabel='api.tx.unique.confirmSponsorship') {
+    let result;
+    try {
+      result = await this.signTransaction(
+        signer,
+        this.api.tx.unique.confirmSponsorship(collectionId),
+        transactionLabel
+      );
+    }
+    catch(e) {
+      if(e.status === this.util.transactionStatus.FAIL) throw Error(`Unable to confirm collection sponsorship for ${label}`);
+    }
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to confirm collection sponsorship for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SponsorshipConfirmed', label);
+  }
+
+  async setNFTCollectionLimits(signer, collectionId, limits, label='collection limits', transactionLabel='api.tx.unique.setCollectionLimits') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setCollectionLimits(collectionId, limits),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection limits for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionLimitSet', label);
+  }
+
+  async setNFTCollectionConstOnChainSchema(signer, collectionId, schema, label='collection constOnChainSchema', transactionLabel='api.tx.unique.setConstOnChainSchema') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setConstOnChainSchema(collectionId, schema),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection constOnChainSchema for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'ConstOnChainSchemaSet', label);
+  }
+
+  async setNFTCollectionVariableOnChainSchema(signer, collectionId, schema, label='collection variableOnChainSchema', transactionLabel='api.tx.unique.setVariableOnChainSchema') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setVariableOnChainSchema(collectionId, schema),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection variableOnChainSchema for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'VariableOnChainSchemaSet', label);
+  }
+
+  async changeNFTCollectionOwner(signer, collectionId, ownerAddress, label='collection owner', transactionLabel='api.tx.unique.changeCollectionOwner') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.changeCollectionOwner(collectionId, ownerAddress),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to change collection owner for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionOwnedChanged', label);
+  }
+
+  async addNFTCollectionAdmin(signer, collectionId, adminAddress, label='collection admin', transactionLabel='api.tx.unique.addCollectionAdmin') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.addCollectionAdmin(collectionId, adminAddress),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to add collection admin for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded', label);
+  }
+
+  async removeNFTCollectionAdmin(signer, collectionId, adminAddress, label='collection admin', transactionLabel='api.tx.unique.removeCollectionAdmin') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.removeCollectionAdmin(collectionId, adminAddress),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to remove collection admin for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminRemoved', label);
   }
 
   async mintNFTCollectionWithDefaults(signer, { name, description, tokenPrefix }, label = 'new collection', transactionLabel = 'api.tx.unique.createCollection') {

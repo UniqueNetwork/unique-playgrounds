@@ -71,6 +71,16 @@ class UniqueExporter {
     return await this.uniqueHelper.getCollection(collectionId);
   }
 
+  async getAllTokens(collectionData) {
+    let tokens = [];
+    const it = await this.genTokenData(collectionData, 1);
+    while (true) {
+      const i = await it.next();
+      if (i.done) break;
+      tokens.push(i.value);
+    }
+    return tokens;
+  }
 
   async export(collectionId, refresh=false) {
     const filename = this.getTokensFilename(collectionId);

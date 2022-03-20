@@ -486,10 +486,10 @@ class UniqueHelper {
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionOwnedChanged', label);
   }
 
-  async addNFTCollectionAdmin(signer, collectionId, adminAddress, label='collection admin', transactionLabel='api.tx.unique.addCollectionAdmin') {
+  async addNFTCollectionAdmin(signer, collectionId, adminAddressObj, label='collection admin', transactionLabel='api.tx.unique.addCollectionAdmin') {
     const result = await this.signTransaction(
       signer,
-      this.api.tx.unique.addCollectionAdmin(collectionId, adminAddress),
+      this.api.tx.unique.addCollectionAdmin(collectionId, adminAddressObj),
       transactionLabel
     );
     if (result.status !== this.transactionStatus.SUCCESS) {
@@ -498,10 +498,10 @@ class UniqueHelper {
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionAdminAdded', label);
   }
 
-  async removeNFTCollectionAdmin(signer, collectionId, adminAddress, label='collection admin', transactionLabel='api.tx.unique.removeCollectionAdmin') {
+  async removeNFTCollectionAdmin(signer, collectionId, adminAddressObj, label='collection admin', transactionLabel='api.tx.unique.removeCollectionAdmin') {
     const result = await this.signTransaction(
       signer,
-      this.api.tx.unique.removeCollectionAdmin(collectionId, adminAddress),
+      this.api.tx.unique.removeCollectionAdmin(collectionId, adminAddressObj),
       transactionLabel
     );
     if (result.status !== this.transactionStatus.SUCCESS) {

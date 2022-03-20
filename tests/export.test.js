@@ -102,13 +102,7 @@ describe('Export helper tests', () => {
     }
 
     await expect(collectionData).toEqual(expectedCollectionInfo);
-    let tokens = [];
-    const it = await exporter.genTokenData(collectionData, 1);
-    while (true) {
-      const i = await it.next();
-      if (i.done) break;
-      tokens.push(i.value);
-    }
+    const tokens = await exporter.getAllTokens(collectionData);
     const expectedTokens = [
       {
         tokenId: 1,

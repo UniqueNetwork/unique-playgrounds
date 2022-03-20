@@ -162,6 +162,24 @@ class UniqueSchemaHelper {
     return {data: obj, human: humanObj};
   }
 
+  validateData(schema, payload) {
+    if (typeof schema === 'string') schema = this.decodeSchema(schema);
+
+    try {
+      const NFTMeta = schema.NFTMeta;
+
+      const errMsg = NFTMeta.verify(payload);
+
+      if (errMsg) {
+        return {success: false, error: Error(errMsg)};
+      }
+    }
+    catch(e) {
+      return {success: false, error: e};
+    }
+    return {success: true, error: null};
+  }
+
   encodeDataBuffer(schema, payload) {
     if (typeof schema === 'string') schema = this.decodeSchema(schema);
 
@@ -273,6 +291,23 @@ class UniqueHelper {
     });
   }
 
+  async getChainProperties() {
+    return (await this.api.registry.getChainProperties()).toHuman();
+  }
+
+  async normalizeSubstrateAddressToChainFormat(address) {
+    let info = await this.getChainProperties();
+    return encodeAddress(decodeAddress(address), parseInt(info.ss58Format));
+  }
+
+  async getSubstrateAccountBalance(address) {
+    return (await this.api.query.system.account(address)).data.free.toBigInt();
+  }
+
+  async getEthereumAccountBalance(address) {
+    return (await this.api.rpc.eth.getBalance(address)).toBigInt();
+  }
+
   async getCollection(collectionId) {
     const collection = await this.api.query.common.collectionById(collectionId);
     let humanCollection = collection.toHuman(), collectionData = {
@@ -280,13 +315,28 @@ class UniqueHelper {
       raw: humanCollection
     };
     if (humanCollection === null) return null;
-    collectionData.raw.owner = this.util.normalizeSubstrateAddress(collectionData.raw.owner);
+    collectionData.normalizedOwner = this.util.normalizeSubstrateAddress(collectionData.raw.owner);
     for (let key of ['name', 'description']) {
       collectionData[key] = this.util.vec2str(humanCollection[key]);
     }
-    collectionData['tokensCount'] = (await this.api.rpc.unique.lastTokenId(collectionId)).toJSON();
-    collectionData['admins'] = (await this.api.rpc.unique.adminlist(collectionId)).toHuman();
+
+    collectionData.tokensCount = await this.getCollectionLastTokenId(collectionId);
+    collectionData.admins = await this.getCollectionAdmins(collectionId);
+
     return collectionData;
+  }
+
+  async getCollectionAdmins(collectionId) {
+    let normalized = [];
+    for(let admin of (await this.api.rpc.unique.adminlist(collectionId)).toHuman()) {
+      if(admin.Substrate) normalized.push({Substrate: this.util.normalizeSubstrateAddress(admin.Substrate)});
+      else normalized.push(admin);
+    }
+    return normalized;
+  }
+
+  async getCollectionLastTokenId(collectionId) {
+    return (await this.api.rpc.unique.lastTokenId(collectionId)).toNumber();
   }
 
   async getToken(collectionId, tokenId) {
@@ -296,7 +346,7 @@ class UniqueHelper {
     for (let key of Object.keys(tokenData.owner)) {
       owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() === 'substrate' ? this.util.normalizeSubstrateAddress(tokenData.owner[key]) : tokenData.owner[key];
     }
-    tokenData.owner = owner;
+    tokenData.normalizedOwner = owner;
     return tokenData;
   }
 

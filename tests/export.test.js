@@ -6,6 +6,7 @@ const { SilentLogger, Logger } = require('../src/lib/logger');
 const { UniqueExporter } = require('../src/helpers/export')
 const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA} = require('./misc/schema.data');
 const { getConfig } = require('./config');
+const { TMPDir } = require('./misc/util');
 
 
 describe('Export helper tests', () => {
@@ -16,20 +17,23 @@ describe('Export helper tests', () => {
   let logger;
   let exporter;
   let collectionId = null;
+  let tmpDir;
   let alice;
 
   beforeAll(async () => {
     const config = getConfig();
+    tmpDir = new TMPDir();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     logger = new loggerCls();
     uniqueHelper = new UniqueHelper(logger);
     await uniqueHelper.connect(config.wsEndpoint);
     schemaHelper = new UniqueSchemaHelper(logger);
-    exporter = new UniqueExporter(uniqueHelper, schemaHelper, os.tmpdir(), logger);
+    exporter = new UniqueExporter(uniqueHelper, schemaHelper, tmpDir.path, logger);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
 
   afterAll(async () => {
+    tmpDir.remove();
     await uniqueHelper.disconnect();
   });
 
@@ -66,10 +70,11 @@ describe('Export helper tests', () => {
       "id": collectionId,
       "name": collection.name,
       "description": collection.description,
+      "normalizedOwner": alice.address,
       "tokensCount": 4,
       "admins": [],
       "raw": {
-        "owner": alice.address,
+        "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
         "access": "Normal",
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
@@ -107,31 +112,31 @@ describe('Export helper tests', () => {
     const expectedTokens = [
       {
         tokenId: 1,
-        realOwner: {substrate: alice.address}, currentOwner: {substrate: alice.address},
+        owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)},
         constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10011a020001',
         variableData: 'alice token',
-        humanData: {data: expectedData([0, 1], 1), human: expectedData(['SMILE', 'SUNGLASSES'], 'Female')}
+        decodedConstData: expectedData([0, 1], 1)
       },
       {
         tokenId: 2,
-        realOwner: {substrate: bob.address}, currentOwner: {substrate: bob.address},
+        owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)},
         constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020102',
         variableData: 'bob token',
-        humanData: {data: expectedData([1, 2], 0), human: expectedData(['SUNGLASSES', 'MUSTACHE'], 'Male')}
+        decodedConstData: expectedData([1, 2], 0)
       },
       {
         tokenId: 3,
-        realOwner: {substrate: charlie.address}, currentOwner: {substrate: charlie.address},
+        owner: {substrate: charlie.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(charlie.address)},
         constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10011a020203',
         variableData: 'charlie token',
-        humanData: {data: expectedData([2, 3], 1), human: expectedData(['MUSTACHE', 'BALD'], 'Female')}
+        decodedConstData: expectedData([2, 3], 1)
       },
       {
         tokenId: 4,
-        realOwner: {substrate: dave.address}, currentOwner: {substrate: dave.address},
+        owner: {substrate: dave.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(dave.address)},
         constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020003',
         variableData: 'dave token',
-        humanData: {data: expectedData([0, 3], 0), human: expectedData(['SMILE', 'BALD'], 'Male')}
+        decodedConstData: expectedData([0, 3], 0)
       },
     ];
     await expect(tokens).toEqual(expectedTokens);

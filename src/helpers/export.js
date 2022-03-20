@@ -55,16 +55,14 @@ class UniqueExporter {
         tokenId++;
         continue;
       }
-      let currentOwner, realOwner, humanData;
+      let decodedConstData;
       try {
-        humanData = schema ? this.schemaHelper.decodeData(schema, tokenData.constData) : null;
+        decodedConstData = schema ? this.schemaHelper.decodeData(schema, tokenData.constData).data : null;
       }
       catch (e) {
-        humanData = null;
+        decodedConstData = null;
       }
-      // TODO: filter market tokens
-      realOwner = currentOwner = tokenData.owner;
-      yield {tokenId, realOwner, currentOwner, constData: tokenData.constData, variableData: tokenData.variableData, humanData};
+      yield {tokenId, owner: tokenData.normalizedOwner, chainOwner: tokenData.owner, constData: tokenData.constData, variableData: tokenData.variableData, decodedConstData};
       tokenId++;
     }
   }

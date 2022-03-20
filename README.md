@@ -26,6 +26,25 @@ You can get mirrors of accounts and it's balances by
 npm run -- command sub_to_eth --ws-endpoint wss://quartz.unique.network 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty
 ```
 
+### Check marketplace configuration
+You can check remote marketplace installation by it's api url
+```shell
+npm npm run -- command check_marketplace_config https://api.unqnft.io
+```
+It will check escrow balance, EVM contract and collections
+
+### Check marketplace contract
+You can check marketplace EVM contract configuration by it's address
+```shell
+npm run -- command check_marketplace_contract --ws-endpoint wss://quartz.unique.network 0x5c03d3976Ad16F50451d95113728E0229C50cAB8
+```
+
+### Check marketplace collections
+You can check marketplace NFT collections by ids
+```shell
+npm run -- command check_marketplace_collection --ws-endpoint wss://quartz.unique.network 1 2
+```
+
 ## Playgrounds
 
 ### Get list

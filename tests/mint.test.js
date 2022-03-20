@@ -42,10 +42,11 @@ describe('Minting tests', () => {
       "id": collectionId,
       "name": collection.name,
       "description": collection.description,
+      "normalizedOwner": alice.address,
       "tokensCount": 0,
       "admins": [],
       "raw": {
-        "owner": alice.address,
+        "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
         "access": "Normal",
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
@@ -83,10 +84,11 @@ describe('Minting tests', () => {
       "id": collectionIdWithDefaults,
       "name": collection.name,
       "description": collection.description,
+      "normalizedOwner": alice.address,
       "tokensCount": 0,
       "admins": [],
       "raw": {
-        "owner": alice.address,
+        "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
         "access": "Normal",
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
@@ -184,42 +186,29 @@ describe('Minting tests', () => {
   it('Add and remove collection admin', async () => {
     let bob = uniqueHelper.util.fromSeed('//Bob');
     let charlie = uniqueHelper.util.fromSeed('//Charlie');
-    let collection, result;
+    let result;
 
-    const normalizeAdmins = collection => {
-      let normalized = [];
-      for(let admin of collection.admins) {
-        normalized.push(uniqueHelper.util.normalizeSubstrateAddress(admin.Substrate))
-      }
-      return normalized;
-    }
-
-    collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.admins).toEqual([]);
+    await expect(await uniqueHelper.getCollectionAdmins(collectionId)).toEqual([]);
 
     result = await uniqueHelper.addNFTCollectionAdmin(alice, collectionId, {Substrate: bob.address});
     await expect(result).toBe(true);
 
-    collection = await uniqueHelper.getCollection(collectionId);
-    await expect(normalizeAdmins(collection)).toEqual([bob.address]);
+    await expect(await uniqueHelper.getCollectionAdmins(collectionId)).toEqual([{Substrate: bob.address}]);
 
     result = await uniqueHelper.addNFTCollectionAdmin(alice, collectionId, {Substrate: charlie.address});
     await expect(result).toBe(true);
 
-    collection = await uniqueHelper.getCollection(collectionId);
-    await expect(normalizeAdmins(collection)).toEqual([bob.address, charlie.address]);
+    await expect(await uniqueHelper.getCollectionAdmins(collectionId)).toEqual([{Substrate: bob.address}, {Substrate: charlie.address}]);
 
     result = await uniqueHelper.removeNFTCollectionAdmin(alice, collectionId, {Substrate: charlie.address});
     await expect(result).toBe(true);
 
-    collection = await uniqueHelper.getCollection(collectionId);
-    await expect(normalizeAdmins(collection)).toEqual([bob.address]);
+    await expect(await uniqueHelper.getCollectionAdmins(collectionId)).toEqual([{Substrate: bob.address}]);
 
     result = await uniqueHelper.removeNFTCollectionAdmin(alice, collectionId, {Substrate: bob.address});
     await expect(result).toBe(true);
 
-    collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.admins).toEqual([]);
+    await expect(await uniqueHelper.getCollectionAdmins(collectionId)).toEqual([]);
   });
 
 
@@ -234,6 +223,9 @@ describe('Minting tests', () => {
       constData: EXAMPLE_DATA_BINARY,
       variableData: '',
       owner: {
+        Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)
+      },
+      normalizedOwner: {
         substrate: alice.address
       }
     });
@@ -268,7 +260,7 @@ describe('Minting tests', () => {
       let chainToken = await uniqueHelper.getToken(collectionId, token.tokenId);
       await expect(chainToken.constData).toEqual(EXAMPLE_DATA_BINARY);
       await expect(chainToken.variableData).toEqual('');
-      await expect(chainToken.owner.substrate).toEqual(expected.owner);
+      await expect(chainToken.normalizedOwner.substrate).toEqual(expected.owner);
     }
   });
 
@@ -288,7 +280,7 @@ describe('Minting tests', () => {
       let chainToken = await uniqueHelper.getToken(collectionId, token.tokenId);
       await expect(chainToken.constData).toEqual(EXAMPLE_DATA_BINARY);
       await expect(chainToken.variableData).toEqual('');
-      await expect(chainToken.owner.substrate).toEqual(bob.address);
+      await expect(chainToken.normalizedOwner.substrate).toEqual(bob.address);
     }
   });
 });

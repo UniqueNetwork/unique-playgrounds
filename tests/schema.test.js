@@ -29,4 +29,12 @@ describe('UniqueSchemaHelper tests', () => {
     let data = schemaHelper.encodeData(EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA);
     expect(data).toEqual(EXAMPLE_DATA_BINARY);
   });
+
+  it('Test validateData', () => {
+    let data = schemaHelper.validateData(EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA);
+    expect(data).toEqual({success: true, error: null});
+    data = schemaHelper.validateData(EXAMPLE_SCHEMA_JSON, {...EXAMPLE_DATA, gender: 3});
+    expect(data.success).toBe(false);
+    expect(data.error.toString()).toEqual('Error: gender: enum value expected');
+  });
 })

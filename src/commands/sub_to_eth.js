@@ -1,19 +1,9 @@
-const { addressToEvm, evmToAddress, validateAddress } = require('@polkadot/util-crypto');
-const Web3 = require('web3');
+const { evmToAddress, validateAddress } = require('@polkadot/util-crypto');
 
 const { Command } = require('../lib/cli');
 const { Logger } = require('../lib/logger');
 const { UniqueHelper } = require('../lib/unique');
-
-
-const subToEthLowercase = eth => {
-  const bytes = addressToEvm(eth);
-  return '0x' + Buffer.from(bytes).toString('hex');
-}
-
-const subToEth = eth => {
-  return Web3.utils.toChecksumAddress(subToEthLowercase(eth));
-}
+const { subToEth, getBalanceString } = require('../helpers/marketplace');
 
 
 class SubToEth extends Command {
@@ -29,7 +19,12 @@ class SubToEth extends Command {
     let logger = new Logger(false);
     const wsEndpoint = optional['ws-endpoint'] || 'wss://opal.unique.network';
     logger.log([`${logger.fmt('WS Endpoint', 'fg.cyan')}:`, wsEndpoint], logger.level.NONE);
-    const api = await UniqueHelper.createConnection(wsEndpoint);
+
+    const uniqueHelper = new UniqueHelper(logger);
+    await uniqueHelper.connect(wsEndpoint);
+
+    let balanceString = await getBalanceString(uniqueHelper);
+
     for(let address of positional.addresses) {
       logger.log('\n', logger.level.NONE);
       let isValid = false;
@@ -43,16 +38,17 @@ class SubToEth extends Command {
       }
       let ethAddress = subToEth(address), subMirrorAddress = evmToAddress(ethAddress);
       logger.log([`${logger.fmt('Substrate address', 'fg.cyan')}:`, address], logger.level.NONE);
-      let subBalance = (await api.query.system.account(address)).data.free.toBigInt().toString();
+      let subBalance = balanceString(await uniqueHelper.getSubstrateAccountBalance(address));
       logger.log([`${logger.fmt('Substrate address balance', 'fg.cyan')}:`, logger.fmt(subBalance, 'fg.yellow')], logger.level.NONE);
       logger.log([`${logger.fmt('Ethereum mirror', 'fg.cyan')}:`, ethAddress], logger.level.NONE);
-      let ethBalance = (await api.rpc.eth.getBalance(ethAddress)).toBigInt().toString();
+      let ethBalance = balanceString(await uniqueHelper.getEthereumAccountBalance(ethAddress));
       logger.log([`${logger.fmt('Ethereum mirror balance', 'fg.cyan')}:`, logger.fmt(ethBalance, 'fg.yellow')], logger.level.NONE);
       logger.log([`${logger.fmt('Substrate mirror of ethereum mirror', 'fg.cyan')}:`, subMirrorAddress], logger.level.NONE);
-      let subMirrorBalance = (await api.query.system.account(subMirrorAddress)).data.free.toBigInt().toString();
+      let subMirrorBalance = balanceString(await uniqueHelper.getSubstrateAccountBalance(subMirrorAddress));
       logger.log([`${logger.fmt('Substrate mirror of ethereum mirror balance', 'fg.cyan')}:`, logger.fmt(subMirrorBalance, 'fg.yellow')], logger.level.NONE);
     }
-    await api.disconnect();
+
+    await uniqueHelper.disconnect();
   }
 }
 

@@ -40,7 +40,10 @@ class CheckMarketplaceContract extends Command {
       } else {
         success(`Contract balance is ${balanceString(balance)}`);
       }
-      if (!(await uniqueHelper.api.query.evmContractHelpers.selfSponsoring(address)).toJSON()) {
+      const sponsoring = (await uniqueHelper.api.query.evmContractHelpers.selfSponsoring(address)).toJSON();
+      const sponsoringMode = (await uniqueHelper.api.query.evmContractHelpers.sponsoringMode(address)).toJSON();
+      const allowedModes = ["Generous", "Allowlisted"];
+      if (allowedModes.indexOf(sponsoringMode) === -1 && !sponsoring) {
         fail(`Contract self-sponsoring is not enabled. You should call toggleSelfSponsoring first`);
       } else {
         success(`Contract self-sponsoring is enabled`);

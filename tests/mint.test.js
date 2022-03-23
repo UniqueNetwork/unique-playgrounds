@@ -34,7 +34,7 @@ describe('Minting tests', () => {
         ownerCanTransfer: true
       }
     }
-    collectionId = await uniqueHelper.mintNFTCollection(alice, collection);
+    collectionId = (await uniqueHelper.mintNFTCollection(alice, collection)).collectionId;
     await expect(collectionId).not.toBeNull();
     const collectionInfo = await uniqueHelper.getCollection(collectionId);
 
@@ -76,7 +76,7 @@ describe('Minting tests', () => {
 
   it('Create collection with defaults', async () => {
     let collection = {name: 'def test', description: 'def test description', tokenPrefix: 'dtst'};
-    let collectionIdWithDefaults = await uniqueHelper.mintNFTCollectionWithDefaults(alice, collection);
+    let collectionIdWithDefaults = (await uniqueHelper.mintNFTCollectionWithDefaults(alice, collection)).collectionId;
     await expect(collectionIdWithDefaults).not.toBeNull();
     const collectionInfo = await uniqueHelper.getCollection(collectionIdWithDefaults);
 
@@ -117,7 +117,7 @@ describe('Minting tests', () => {
   });
 
   it('Burn collection', async () => {
-    let burnId = await uniqueHelper.mintNFTCollection(alice, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'});
+    let burnId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'})).collectionId;
     let result = await uniqueHelper.burnNFTCollection(alice, burnId);
     await expect(result).toBe(true);
   });
@@ -171,7 +171,7 @@ describe('Minting tests', () => {
 
   it('Change collection owner', async () => {
     let bob = uniqueHelper.util.fromSeed('//Bob');
-    let collectionId = await uniqueHelper.mintNFTCollection(alice, {name: 'to bob', description: 'collection from alice to bob', tokenPrefix: 'atb'});
+    let collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to bob', description: 'collection from alice to bob', tokenPrefix: 'atb'})).collectionId;
 
     let collection = await uniqueHelper.getCollection(collectionId);
     await expect(uniqueHelper.util.normalizeSubstrateAddress(collection.raw.owner)).toEqual(alice.address);
@@ -264,7 +264,7 @@ describe('Minting tests', () => {
     }
   });
 
-  it('Mint multiple tokens with different owners', async () => {
+  it('Mint multiple tokens with one owner', async () => {
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const result = await uniqueHelper.mintMultipleNFTTokensWithOneOwner(alice, collectionId, bob.address,[
       {constData: EXAMPLE_DATA_BINARY}, {constData: EXAMPLE_DATA_BINARY}

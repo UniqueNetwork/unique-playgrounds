@@ -20,7 +20,7 @@ describe('Import helper tests', () => {
 
   const createCollection = async () => {
     const dave = uniqueHelper.util.fromSeed('//Dave');
-    collectionId = await uniqueHelper.mintNFTCollection(alice, {name: 'to import', description: 'collection id to import', tokenPrefix: 'imp', constOnChainSchema: EXAMPLE_SCHEMA_JSON});
+    collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to import', description: 'collection id to import', tokenPrefix: 'imp', constOnChainSchema: EXAMPLE_SCHEMA_JSON})).collectionId;
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const charlie = uniqueHelper.util.fromSeed('//Charlie');
     await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
@@ -114,9 +114,8 @@ describe('Import helper tests', () => {
 
   it('Import to existed collection (Only collection)', async () => {
     let collectionData = await exporter.genCollectionData(collectionId);
-    let tokens = await exporter.getAllTokens(collectionData);
 
-    let existedCollectionId = await uniqueHelper.mintNFTCollection(alice, {name: 'existed to import', description: 'existed collection id to import', tokenPrefix: 'eimp', constOnChainSchema: EXAMPLE_SCHEMA_JSON});
+    let existedCollectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'existed to import', description: 'existed collection id to import', tokenPrefix: 'eimp', constOnChainSchema: EXAMPLE_SCHEMA_JSON})).collectionId;
 
     let stateFile = importer.getStateFilename(collectionData.id);
     fs.writeFileSync(stateFile, JSON.stringify({

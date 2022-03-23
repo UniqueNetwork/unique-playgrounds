@@ -326,6 +326,10 @@ class UniqueHelper {
     return collectionData;
   }
 
+  getCollectionObject(collectionId) {
+    return new UniqueNFTCollection(collectionId, this);
+  }
+
   async getCollectionAdmins(collectionId) {
     let normalized = [];
     for(let admin of (await this.api.rpc.unique.adminlist(collectionId)).toHuman()) {
@@ -361,7 +365,7 @@ class UniqueHelper {
       this.api.tx.unique.createCollectionEx(collectionOptions),
       transactionLabel
     );
-    return this.util.extractCollectionIdFromCreationResult(creationResult, label);
+    return this.getCollectionObject(this.util.extractCollectionIdFromCreationResult(creationResult, label));
   }
 
   async burnNFTCollection(signer, collectionId, label='collection to burn', transactionLabel='api.tx.destroyCollection') {
@@ -516,7 +520,7 @@ class UniqueHelper {
       this.api.tx.unique.createCollection(this.util.str2vec(name), this.util.str2vec(description), this.util.str2vec(tokenPrefix), {nft: null}),
       transactionLabel
     );
-    return this.util.extractCollectionIdFromCreationResult(creationResult, label);
+    return this.getCollectionObject(this.util.extractCollectionIdFromCreationResult(creationResult, label));
   }
 
   async mintNFTToken(signer, { collectionId, owner, constData, variableData }, label = 'new token', transactionLabel = 'api.tx.unique.createItem') {
@@ -568,6 +572,98 @@ class UniqueHelper {
     const burnedTokens = this.util.extractTokensFromBurnResult(burnResult, label);
     if (burnedTokens.tokens.length > 1) throw Error('Created multiple tokens');
     return {success: burnedTokens.success, token: burnedTokens.tokens.length > 0 ? burnedTokens.tokens[0] : null};
+  }
+
+  async changeNFTTokenVariableData(signer, collectionId, tokenId, variableData, label='token with variableData', transactionLabel='api.tx.unique.setVariableMetaData') {
+    const changeResult = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setVariableMetaData(collectionId, tokenId, variableData),
+      transactionLabel
+    );
+    return changeResult.status === this.transactionStatus.SUCCESS;
+  }
+}
+
+class UniqueNFTCollection {
+  constructor(collectionId, uniqueHelper) {
+    this.collectionId = collectionId;
+    this.uniqueHelper = uniqueHelper;
+  }
+
+  async getData() {
+    return await this.uniqueHelper.getCollection(this.collectionId);
+  }
+
+  async getAdmins() {
+    return await this.uniqueHelper.getCollectionAdmins(this.collectionId);
+  }
+
+  async getLastTokenId() {
+    return await this.uniqueHelper.getCollectionLastTokenId(this.collectionId);
+  }
+
+  async getToken(tokenId) {
+    return await this.uniqueHelper.getToken(this.collectionId, tokenId);
+  }
+
+  async burn(signer, label) {
+    return await this.uniqueHelper.burnNFTCollection(signer, this.collectionId, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async setSchemaVersion(signer, schemaVersion, label) {
+    return await this.uniqueHelper.setNFTCollectionSchemaVersion(signer, this.collectionId, schemaVersion, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async setOffchainSchema(signer, offchainSchema, label) {
+    return await this.uniqueHelper.setNFTCollectionOffchainSchema(signer, this.collectionId, offchainSchema, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async setSponsor(signer, sponsorAddress, label) {
+    return await this.uniqueHelper.setNFTCollectionSponsor(signer, this.collectionId, sponsorAddress, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async confirmSponsorship(signer, label) {
+    return await this.uniqueHelper.confirmNFTCollectionSponsorship(signer, this.collectionId, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async setLimits(signer, limits, label) {
+    return await this.uniqueHelper.setNFTCollectionLimits(signer, this.collectionId, limits, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async setConstOnChainSchema(signer, schema, label) {
+    return await this.uniqueHelper.setNFTCollectionConstOnChainSchema(signer, this.collectionId, schema, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async setVariableOnChainSchema(signer, schema, label) {
+    return await this.uniqueHelper.setNFTCollectionVariableOnChainSchema(signer, this.collectionId, schema, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async changeOwner(signer, ownerAddress, label) {
+    return await this.uniqueHelper.changeNFTCollectionOwner(signer, this.collectionId, ownerAddress, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async addAdmin(signer, adminAddressObj, label) {
+    return await this.uniqueHelper.addNFTCollectionAdmin(signer, this.collectionId, adminAddressObj, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async removeAdmin(signer, adminAddressObj, label) {
+    return await this.uniqueHelper.removeNFTCollectionAdmin(signer, this.collectionId, adminAddressObj, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async mintToken(signer, owner, constData, variableData, label) {
+    return await this.uniqueHelper.mintNFTToken(signer, {collectionId: this.collectionId, owner, constData, variableData}, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async mintMultipleTokens(signer, tokens, label) {
+    return await this.uniqueHelper.mintMultipleNFTTokens(signer, this.collectionId, tokens, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async burnToken(signer, tokenId, label) {
+    return await this.uniqueHelper.burnNFTToken(signer, this.collectionId, tokenId, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async changeTokenVariableData(signer, tokenId, variableData, label) {
+    return await this.uniqueHelper.changeNFTTokenVariableData(signer, this.collectionId, tokenId, variableData, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 }
 

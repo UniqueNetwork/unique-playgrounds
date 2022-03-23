@@ -130,7 +130,7 @@ class UniqueImporter {
   }
 
   async createAndBurnCollection(exportCollectionId)  {
-    let collectionId = await this.uniqueHelper.mintNFTCollection(this.signer, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'});
+    let collectionId = (await this.uniqueHelper.mintNFTCollection(this.signer, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'})).collectionId;
     await this.uniqueHelper.burnNFTCollection(this.signer, collectionId);
     let importState = new ImportState(this, exportCollectionId);
     importState.updateState({id: collectionId, is_created: true, is_burned: true});
@@ -203,7 +203,7 @@ class UniqueImporter {
         if(Object.keys(limits).length > 0) collectionOptions.limits = limits;
       }
 
-      collectionId = await this.uniqueHelper.mintNFTCollection(this.signer, collectionOptions, `exported collection #${exportCollectionId}`);
+      collectionId = (await this.uniqueHelper.mintNFTCollection(this.signer, collectionOptions, `exported collection #${exportCollectionId}`)).collectionId;
       importState.updateState({
         is_created: true, id: collectionId, has_schema_version: true, has_offchain_schema: true,
         has_const_onchain_schema: true, has_variable_onchain_schema: true, has_sponsorship: true, has_limits: true

@@ -44,7 +44,7 @@ class CheckMarketplaceContract extends Command {
       const sponsoringMode = (await uniqueHelper.api.query.evmContractHelpers.sponsoringMode(address)).toJSON();
       const allowedModes = ["Generous", "Allowlisted"];
       if (allowedModes.indexOf(sponsoringMode) === -1 && !sponsoring) {
-        fail(`Contract self-sponsoring is not enabled. You should call toggleSelfSponsoring first`);
+        fail(`Contract self-sponsoring is not enabled. You should call setSponsoringMode first`);
       } else {
         success(`Contract self-sponsoring is enabled`);
       }

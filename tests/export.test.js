@@ -45,7 +45,7 @@ describe('Export helper tests', () => {
       schemaVersion: 'Unique',
       constOnChainSchema: EXAMPLE_SCHEMA_JSON
     };
-    collectionId = await uniqueHelper.mintNFTCollection(alice, collection);
+    collectionId = (await uniqueHelper.mintNFTCollection(alice, collection)).collectionId;
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const charlie = uniqueHelper.util.fromSeed('//Charlie');
     const dave = uniqueHelper.util.fromSeed('//Dave');

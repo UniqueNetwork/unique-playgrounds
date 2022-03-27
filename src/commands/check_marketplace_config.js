@@ -1,11 +1,9 @@
-const http = require('http');
-const https = require('https');
 const { Command } = require('../lib/cli');
 const { Logger } = require('../lib/logger');
 const { CommandCls: CheckCollection } = require('./check_marketplace_collection')
 const { CommandCls: CheckContract } = require('./check_marketplace_contract');
 const { UniqueHelper } = require('../lib/unique');
-const { getBalanceString } = require('../helpers/marketplace');
+const { getBalanceString, getRemoteMarketplaceSettings } = require('../helpers/marketplace');
 
 
 class CheckMarketplaceConfig extends Command {
@@ -13,22 +11,6 @@ class CheckMarketplaceConfig extends Command {
     {key: 'marketplace_api_url', help: 'URL for marketplace api domain with protocol (Example: https://api.unqnft.io)'}
   ]
   HELP = 'Check settings for unique marketplace installation'
-
-  getSettings(url) {
-    let module = (url.indexOf('https://') === 0) ? https : http;
-    return new Promise((resolve, reject) => {
-      let responseSent = false;
-      module.get(url, response => {
-        response.on('data', d => {
-          resolve(JSON.parse(d));
-        });
-      }).on('error', err => {
-        if(responseSent)  return;
-        responseSent = true;
-        reject(err);
-      });
-    });
-  }
 
   async run(optional, positional) {
     let logger = new Logger(false);
@@ -39,7 +21,7 @@ class CheckMarketplaceConfig extends Command {
     let settings;
 
     try {
-      settings = await this.getSettings(marketplaceSettingsUrl);
+      settings = await getRemoteMarketplaceSettings(marketplaceSettingsUrl);
     }
     catch(e) {
       logger.log('Unable to get marketplace settings. Are marketplace_api_url correct?', logger.level.ERROR);

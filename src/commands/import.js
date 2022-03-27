@@ -29,7 +29,6 @@ class Import extends Command {
     const signerSeed = optional['signer-seed'];
     let signer;
 
-    console.log('signerSeed', signerSeed);
     let logger = new (optional.silent ? SilentLogger : Logger)(false);
     if(!optional.silent) {
       logger.log([`${logger.fmt('WS Endpoint', 'fg.yellow')}:`, wsEndpoint], logger.level.NONE);

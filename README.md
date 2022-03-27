@@ -26,6 +26,12 @@ You can import collection and tokens to chain by
 npm run --command import --ws-enpoint ws://localhost:9944 --signer-seed 'electric suit ...' 1 2
 ```
 
+### Sell token to marketplace
+You can automatically sell token to unique marketplace using it's api url by
+```shell
+npm run --command sell_token_to_marketplace --collection-id 1 --token-id 1 --signer-seed 'electric suit ...' --price 99000000000000 https://api.unqnft.io
+```
+
 ### Show eth and eth2sub mirrors of substrate accounts
 You can get mirrors of accounts and it's balances by
 ```shell
@@ -35,7 +41,7 @@ npm run -- command sub_to_eth --ws-endpoint wss://quartz.unique.network 5GrwvaEF
 ### Check marketplace configuration
 You can check remote marketplace installation by it's api url
 ```shell
-npm npm run -- command check_marketplace_config https://api.unqnft.io
+npm run -- command check_marketplace_config https://api.unqnft.io
 ```
 It will check escrow balance, EVM contract and collections
 

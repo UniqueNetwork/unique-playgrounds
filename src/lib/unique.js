@@ -112,6 +112,32 @@ class UniqueUtil {
     }
     return eventId === collectionId;
   }
+
+  static isTokenTransferSuccess(events, collectionId, tokenId, fromAddressObj, toAddressObj) {
+    const normalizeAddress = address => {
+      if(address.Substrate) return {Substrate: this.normalizeSubstrateAddress(address.Substrate)};
+      if(address.Ethereum) return {Ethereum: address.Ethereum.toLocaleLowerCase()};
+      return address;
+    }
+    let transfer = {collectionId: null, tokenId: null, from: null, to: null, amount: 1};
+    events.forEach(({event: {data, method, section}}) => {
+      if ((section === 'common') && (method === 'Transfer')) {
+        let hData = data.toHuman();
+        transfer = {
+          collectionId: parseInt(hData[0]),
+          tokenId: parseInt(hData[1]),
+          from: normalizeAddress(hData[2]),
+          to: normalizeAddress(hData[3]),
+          amount: parseInt(hData[4])
+        };
+      }
+    });
+    let isSuccess = parseInt(collectionId) === transfer.collectionId && parseInt(tokenId) === transfer.tokenId;
+    isSuccess = isSuccess && JSON.stringify(normalizeAddress(fromAddressObj)) === JSON.stringify(transfer.from);
+    isSuccess = isSuccess && JSON.stringify(normalizeAddress(toAddressObj)) === JSON.stringify(transfer.to);
+    isSuccess = isSuccess && 1 === transfer.amount;
+    return isSuccess;
+  }
 }
 
 
@@ -295,6 +321,11 @@ class UniqueHelper {
     return (await this.api.registry.getChainProperties()).toHuman();
   }
 
+  async getOneTokenNominal() {
+    const chainProperties = await this.getChainProperties();
+    return 10n ** BigInt((chainProperties.tokenDecimals || ['18'])[0]);
+  }
+
   async normalizeSubstrateAddressToChainFormat(address) {
     let info = await this.getChainProperties();
     return encodeAddress(decodeAddress(address), parseInt(info.ss58Format));
@@ -306,6 +337,28 @@ class UniqueHelper {
 
   async getEthereumAccountBalance(address) {
     return (await this.api.rpc.eth.getBalance(address)).toBigInt();
+  }
+
+  async transferBalanceToSubstrateAccount(signer, address, amount, transactionLabel='api.tx.balances.transfer') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.balances.transfer(address, amount),
+      transactionLabel
+    );
+    let transfer = {from: null, to: null, amount: 0n};
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if ((section === 'balances') && (method === 'Transfer')) {
+        transfer = {
+          from: this.util.normalizeSubstrateAddress(data[0]),
+          to: this.util.normalizeSubstrateAddress(data[1]),
+          amount: BigInt(data[2])
+        };
+      }
+    });
+    let isSuccess = this.util.normalizeSubstrateAddress(signer.address) === transfer.from;
+    isSuccess = isSuccess && this.util.normalizeSubstrateAddress(address) === transfer.to;
+    isSuccess = isSuccess && BigInt(amount) === transfer.amount;
+    return isSuccess;
   }
 
   async getCollection(collectionId) {
@@ -352,6 +405,23 @@ class UniqueHelper {
     }
     tokenData.normalizedOwner = owner;
     return tokenData;
+  }
+
+  async transferNFTToken(signer, collectionId, tokenId, addressObj, transactionLabel='api.tx.unique.transfer') {
+    let result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.transfer(addressObj, collectionId, tokenId, 1),
+      transactionLabel
+    );
+    return this.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: signer.address}, addressObj);
+  }
+  async transferNFTTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, transactionLabel='api.tx.unique.transferFrom') {
+    let result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.transferFrom(fromAddressObj, toAddressObj, collectionId, tokenId, 1),
+      transactionLabel
+    );
+    return this.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, fromAddressObj, toAddressObj);
   }
 
   async mintNFTCollection(signer, collectionOptions, label = 'new collection', transactionLabel = 'api.tx.unique.createCollectionEx') {
@@ -604,6 +674,14 @@ class UniqueNFTCollection {
 
   async getToken(tokenId) {
     return await this.uniqueHelper.getToken(this.collectionId, tokenId);
+  }
+
+  async transferToken(signer, tokenId, addressObj) {
+    return await this.uniqueHelper.transferNFTToken(signer, this.collectionId, tokenId, addressObj);
+  }
+
+  async transferTokenFrom(signer, tokenId, fromAddressObj, toAddressObj) {
+    return await this.uniqueHelper.transferNFTTokenFrom(signer, this.collectionId, tokenId, fromAddressObj, toAddressObj);
   }
 
   async burn(signer, label) {

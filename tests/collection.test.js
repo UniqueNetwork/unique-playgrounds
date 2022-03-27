@@ -1,5 +1,6 @@
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
+const { subToEth } = require('../src/helpers/marketplace');
 const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA_BINARY } = require('./misc/schema.data');
 const { getConfig } = require('./config');
 
@@ -65,6 +66,20 @@ describe('Minting tests', () => {
     let result = await collection.changeTokenVariableData(alice, 1, 'to burn');
     await expect(result).toBe(true);
     await expect((await collection.getToken(1)).variableData).toEqual('to burn');
+  });
+
+  it('Test transferToken', async() => {
+    let result = await collection.transferToken(alice, 1, {Ethereum: subToEth(alice.address)});
+    await expect(result).toBe(true);
+    let currentOwner = (await collection.getToken(1)).normalizedOwner;
+    await expect(currentOwner).toEqual({ethereum: subToEth(alice.address).toLocaleLowerCase()});
+  });
+
+  it('Test transferTokenFrom', async() => {
+    let result = await collection.transferTokenFrom(alice, 1, {Ethereum: subToEth(alice.address)}, {Substrate: alice.address});
+    await expect(result).toBe(true);
+    let currentOwner = (await collection.getToken(1)).normalizedOwner;
+    await expect(currentOwner).toEqual({substrate: alice.address});
   });
 
   it('Test burnToken', async() => {

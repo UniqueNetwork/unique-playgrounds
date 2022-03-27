@@ -1,7 +1,9 @@
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
+const { subToEth } = require('../src/helpers/marketplace');
 const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA_BINARY } = require('./misc/schema.data');
 const { getConfig } = require('./config');
+
 
 describe('Minting tests', () => {
   jest.setTimeout(60 * 60 * 1000);
@@ -229,6 +231,19 @@ describe('Minting tests', () => {
         substrate: alice.address
       }
     });
+  });
+
+  it('Transfer and transferFrom token', async () => {
+    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to test transfer', description: 'collection to test tokens transfer', tokenPrefix: 'ttt'})).collectionId;
+    await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, constData: EXAMPLE_DATA_BINARY});
+    let transferResult = await uniqueHelper.transferNFTToken(alice, collectionId, 1, {Ethereum: subToEth(alice.address)});
+    await expect(transferResult).toBe(true);
+    let currentOwner = (await uniqueHelper.getToken(collectionId, 1)).normalizedOwner;
+    await expect(currentOwner).toEqual({ethereum: subToEth(alice.address).toLocaleLowerCase()});
+    let transferFromResult = await uniqueHelper.transferNFTTokenFrom(alice, collectionId, 1, {Ethereum: subToEth(alice.address)}, {Substrate: alice.address});
+    await expect(transferFromResult).toBe(true);
+    currentOwner = (await uniqueHelper.getToken(collectionId, 1)).normalizedOwner;
+    await expect(currentOwner).toEqual({substrate: alice.address});
   });
 
   it('Burn token', async () => {

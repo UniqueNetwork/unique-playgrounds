@@ -1,9 +1,8 @@
 {
-  "moduleFileExtensions": ["js"],
+  "moduleFileExtensions": ["cjs", "js", "json"],
   "rootDir": "..",
   "testEnvironment": "node",
   "testRegex": ".test.js$",
   "verbose": true,
-  "resolver": "./misc/resolver",
   "testTimeout": 60000
 }

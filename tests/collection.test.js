@@ -124,7 +124,7 @@ describe('Minting tests', () => {
     let result = await collection.setLimits(alice, {sponsorTransferTimeout: 0, sponsorApproveTimeout: 0});
     await expect(result).toBe(true);
     let limits = (await collection.getData()).raw.limits;
-    await expect([limits.sponsorTransferTimeout, limits.sponsorApproveTimeout]).toEqual(['0', '0']);
+    await expect([limits.sponsorTransferTimeout, limits.sponsorApproveTimeout]).toEqual([0, 0]);
   });
 
   it('Test setConstOnChainSchema', async() => {

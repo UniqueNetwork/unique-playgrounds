@@ -23,7 +23,7 @@ npm run -- command export --ws-endpoint wss://quartz.unique.network --output-dir
 ### Import collection
 You can import collection and tokens to chain by
 ```shell
-npm run --command import --ws-enpoint ws://localhost:9944 --signer-seed 'electric suit ...' 1 2
+npm run -- command import --ws-endpoint ws://localhost:9944 --signer-seed 'electric suit ...' 1 2
 ```
 
 ### Show eth and eth2sub mirrors of substrate accounts

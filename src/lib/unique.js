@@ -368,6 +368,7 @@ class UniqueHelper {
       raw: humanCollection
     };
     if (humanCollection === null) return null;
+    collectionData.raw.limits = collection.toJSON().limits;
     collectionData.normalizedOwner = this.util.normalizeSubstrateAddress(collectionData.raw.owner);
     for (let key of ['name', 'description']) {
       collectionData[key] = this.util.vec2str(humanCollection[key]);

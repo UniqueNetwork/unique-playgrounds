@@ -7,7 +7,11 @@
   "scripts": {
     "playground": "node cli.js run_playground",
     "command": "node cli.js run_command",
-    "test": "jest --config tests/misc/jest.config.json"
+    "test": "jest --config tests/misc/jest.config.json --maxConcurrency=1"
+  },
+  "engines": {
+    "npm": ">=7.0.0",
+    "node": ">=16.0.0"
   },
   "dependencies": {
     "@polkadot/api": "7.12.1",

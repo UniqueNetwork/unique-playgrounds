@@ -47,7 +47,7 @@ class Import extends Command {
       signer = uniqueHelper.util.fromSeed(signerSeed);
     }
     catch(e) {
-      logger.log(logger.fmt('Invalid --signer-seed argument, exit', 'fg.red'), logger.level.NONE);
+      logger.log(logger.fmt('Invalid --signer-seed option, exit', 'fg.red'), logger.level.NONE);
       return;
     }
     if(!optional.silent) {

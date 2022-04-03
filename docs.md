@@ -138,7 +138,17 @@ let success = await uniqueHelper.transferBalanceToSubstrateAccount(signer, '5FHn
 ```
 
 
+## getTotalCollectionsCount
+```typescript
+async getTotalCollectionsCount(): Promise<Number>
+```
 
+Returns count of collections created on current chain
+
+Example:
+```javascript
+let totalCollections = await uniqueHelper.getTotalCollectionsCount();
+```
 
 ### getCollectionObject
 ```typescript

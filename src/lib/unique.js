@@ -361,6 +361,10 @@ class UniqueHelper {
     return isSuccess;
   }
 
+  async getTotalCollectionsCount() {
+    return (await this.api.query.common.createdCollectionCount()).toJSON();
+  }
+
   async getCollection(collectionId) {
     const collection = await this.api.query.common.collectionById(collectionId);
     let humanCollection = collection.toHuman(), collectionData = {

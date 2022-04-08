@@ -4,7 +4,7 @@ const runPlayground = async (args) => {
     playground = require(`./src/playgrounds/${args[1]}`);
   }
   catch(e) {
-    console.log(`Playground ${args[1]} not found`);
+    console.log(`Playground ${args[1]} could not be loaded: [ERROR]`, e.message.split('\n')[0]);
     return;
   }
   if(args.indexOf('--help') > -1) {

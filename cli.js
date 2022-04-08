@@ -4,7 +4,11 @@ const runPlayground = async (args) => {
     playground = require(`./src/playgrounds/${args[1]}`);
   }
   catch(e) {
-    console.log(`Playground ${args[1]} not found`);
+    if (e.code === 'MODULE_NOT_FOUND' && e.requireStack.length < 2) {
+      console.log(`Playground '${args[1]}' could not be found. Does file 'src/playgrounds/${args[1]}.js' exist?`);
+    } else {
+      console.log(`Playground ${args[1]} could not be loaded: [ERROR]`, e.message.split('\n')[0]);
+    }
     return;
   }
   if(args.indexOf('--help') > -1) {

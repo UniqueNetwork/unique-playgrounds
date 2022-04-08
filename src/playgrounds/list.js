@@ -5,9 +5,9 @@ const { getUsage } = require('../lib/cli');
 const DESCRIPTION = 'Get list of all available playgrounds';
 
 const main = async (args) => {
-  const unavailablePlaygrounds = []
+  const unavailablePlaygrounds = [];
 
-  console.log('Available playgrounds:')
+  console.log('Available playgrounds:');
   for(let file of fs.readdirSync(__dirname)) {
     if(file.endsWith('.js')) {
       let playgroundName = file.slice(0, -3);
@@ -19,21 +19,21 @@ const main = async (args) => {
           unavailablePlaygrounds.push({
             playgroundName,
             message: `Not a playground - main function or help have not been provided`
-          })
+          });
         }
       } catch (error) {
         unavailablePlaygrounds.push({
           playgroundName,
           message: '[ERROR] could not load playground file:' + error.message.split('\n')[0]
-        })
+        });
       }
     }
   }
 
   if (unavailablePlaygrounds.length) {
-    console.log('\nUnavailable playgrounds:')
+    console.log('\nUnavailable playgrounds:');
     for (let {playgroundName, message} of unavailablePlaygrounds) {
-      console.log(`  ${playgroundName} - ${message}`)
+      console.log(`  ${playgroundName} - ${message}`);
     }
   }
 

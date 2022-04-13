@@ -69,6 +69,30 @@ Example (for Quartz):
 await uniqueHelper.getChainProperties(); // {ss58Format: "255", "tokenDecimals": ["18"], "tokenSymbol": ["QTZ"]}
 ```
 
+### getLatestBlockNumber
+```typescript
+async getLatestBlockNumber(): Promise<Number>
+```
+
+The method returns number of last generated block.
+
+Example:
+```javascript
+let latestBlock = await uniqueHelper.getLatestBlockNumber()
+```
+
+
+### getBlockHashByNumber
+```typescript
+async getBlockHashByNumber(blockNumber: Number): Promise<string | null>
+```
+
+The method returns hash of block by its number if block exists.
+
+Example:
+```javascript
+let firstBlockHash = await uniqueHelper.getBlockHashByNumber(1); //
+```
 
 ### getOneTokenNominal
 
@@ -138,7 +162,7 @@ let success = await uniqueHelper.transferBalanceToSubstrateAccount(signer, '5FHn
 ```
 
 
-## getTotalCollectionsCount
+### getTotalCollectionsCount
 ```typescript
 async getTotalCollectionsCount(): Promise<Number>
 ```
@@ -230,7 +254,7 @@ await collection.getLastTokenId(); // 10000
 
 ### getToken
 ```typescript
-async getToken(collectionId: Number, tokenId: Number): Promise<{
+async getToken(collectionId: Number, tokenId: Number, blockHashAt?: string): Promise<{
   constData: string,
   varibaleData: string,
   owner: {Substrate?: string, Ethereum?: string},

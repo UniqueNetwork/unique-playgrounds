@@ -3,15 +3,17 @@ const path = require('path');
 
 const { UniqueUtil } = require('../lib/unique');
 
+const UNDEFINED = ({}).notdefined;
 
 class UniqueExporter {
-  constructor(uniqueHelper, schemaHelper, exportPath, logger) {
+  constructor(uniqueHelper, schemaHelper, exportPath, logger, blockNumber) {
     if(typeof exportPath === 'undefined') exportPath = '.';
     if(typeof logger === 'undefined') logger = UniqueUtil.getDefaultLogger();
     this.exportPath = exportPath;
     this.uniqueHelper = uniqueHelper;
     this.schemaHelper = schemaHelper;
     this.logger = logger;
+    this.blockNumber = blockNumber === null ? UNDEFINED : blockNumber;
   }
 
   getLastTokenId(text) {
@@ -49,7 +51,7 @@ class UniqueExporter {
     }
 
     while (true) {
-      const tokenData = await this.uniqueHelper.getToken(collectionData.id, tokenId);
+      const tokenData = await this.uniqueHelper.getToken(collectionData.id, tokenId, this.blockNumber);
       if(!tokenData) {
         if(tokenId >= tokensCount) break;
         tokenId++;

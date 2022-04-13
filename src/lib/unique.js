@@ -321,6 +321,16 @@ class UniqueHelper {
     return (await this.api.registry.getChainProperties()).toHuman();
   }
 
+  async getLatestBlockNumber() {
+    return (await this.api.rpc.chain.getHeader()).number.toNumber();
+  }
+
+  async getBlockHashByNumber(blockNumber) {
+    const blockHash = (await this.api.rpc.chain.getBlockHash(blockNumber)).toJSON();
+    if(blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
+    return blockHash;
+  }
+
   async getOneTokenNominal() {
     const chainProperties = await this.getChainProperties();
     return 10n ** BigInt((chainProperties.tokenDecimals || ['18'])[0]);
@@ -401,8 +411,8 @@ class UniqueHelper {
     return (await this.api.rpc.unique.lastTokenId(collectionId)).toNumber();
   }
 
-  async getToken(collectionId, tokenId) {
-    const tokenData = (await this.api.query.nonfungible.tokenData(collectionId, tokenId)).toHuman();
+  async getToken(collectionId, tokenId, blockHashAt) {
+    const tokenData = (await (typeof blockHashAt === 'undefined' ? this.api.query.nonfungible.tokenData(collectionId, tokenId) : this.api.query.nonfungible.tokenData.at(blockHashAt, collectionId, tokenId))).toHuman();
     if (tokenData === null) return null;
     let owner = {};
     for (let key of Object.keys(tokenData.owner)) {
@@ -677,8 +687,8 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.getCollectionLastTokenId(this.collectionId);
   }
 
-  async getToken(tokenId) {
-    return await this.uniqueHelper.getToken(this.collectionId, tokenId);
+  async getToken(tokenId, blockHashAt) {
+    return await this.uniqueHelper.getToken(this.collectionId, tokenId, blockHashAt);
   }
 
   async transferToken(signer, tokenId, addressObj) {

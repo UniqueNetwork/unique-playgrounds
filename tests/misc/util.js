@@ -8,7 +8,7 @@ class TMPDir {
     fs.mkdirSync(this.path);
   }
   remove() {
-    fs.rmdirSync(this.path, {recursive: true});
+    fs.rmSync(this.path, {recursive: true});
     this.path = null;
   }
 }

@@ -37,6 +37,40 @@ describe('Export helper tests', () => {
     await uniqueHelper.disconnect();
   });
 
+  it('Export token owners by blockNumber', async () => {
+    const bob = uniqueHelper.util.fromSeed('//Bob');
+    let collection = (await uniqueHelper.mintNFTCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'tst'}));
+    await collection.mintToken(alice, alice.address, '', 'alice token');
+    const lastBlockAfterMint = await uniqueHelper.getLatestBlockNumber();
+    const collectionData = await exporter.genCollectionData(collection.collectionId);
+
+    let tokens = await exporter.getAllTokens(collectionData);
+    const aliceTokenData = {
+      tokenId: 1,
+      owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)},
+      constData: '',
+      variableData: 'alice token',
+      decodedConstData: null
+    };
+    await expect(tokens).toEqual([aliceTokenData]);
+
+    // Make changes
+    await collection.changeTokenVariableData(alice, 1, 'bob token');
+    await collection.transferToken(alice, 1, {Substrate: bob.address});
+
+    tokens = await exporter.getAllTokens(collectionData);
+    await expect(tokens).toEqual([{
+      ...aliceTokenData,
+      variableData: 'bob token',
+      owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)}
+    }]);
+
+    // Get state before changes
+    let newExporter = new UniqueExporter(uniqueHelper, schemaHelper, tmpDir.path, logger, await uniqueHelper.getBlockHashByNumber(lastBlockAfterMint));
+    tokens = await newExporter.getAllTokens(collectionData);
+    await expect(tokens).toEqual([aliceTokenData]);
+  });
+
   it('Export collection', async () => {
     const collection = {
       name: 'export',

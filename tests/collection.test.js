@@ -62,6 +62,13 @@ describe('Minting tests', () => {
     });
   });
 
+  it('Test isTokenExists', async() => {
+    let existToken = await collection.isTokenExists(1);
+    await expect(existToken).toBe(true);
+    let nonExistToken = await collection.isTokenExists(2);
+    await expect(nonExistToken).toBe(false);
+  });
+
   it('Test changeTokenVariableData', async() => {
     let result = await collection.changeTokenVariableData(alice, 1, 'to burn');
     await expect(result).toBe(true);
@@ -127,6 +134,23 @@ describe('Minting tests', () => {
     await expect([limits.sponsorTransferTimeout, limits.sponsorApproveTimeout]).toEqual([0, 0]);
   });
 
+  it('Test getEffectiveLimits', async() => {
+    let result = await collection.getEffectiveLimits();
+    await expect(result).toEqual({
+      "accountTokenOwnershipLimit": 100_000,
+      "sponsoredDataSize": 2048,
+      "sponsoredDataRateLimit": {
+        "sponsoringDisabled": null
+      },
+      "tokenLimit": 4_294_967_295,
+      "sponsorTransferTimeout": 0,
+      "sponsorApproveTimeout": 0,
+      "ownerCanTransfer": true,
+      "ownerCanDestroy": true,
+      "transfersEnabled": true
+    });
+  });
+
   it('Test setConstOnChainSchema', async() => {
     let result = await collection.setConstOnChainSchema(alice, EXAMPLE_SCHEMA_JSON);
     await expect(result).toBe(true);
@@ -157,8 +181,9 @@ describe('Minting tests', () => {
   it('Test mintMultipleTokens', async() => {
     const bob = uniqueHelper.util.fromSeed('//Bob');
     let result = await collection.mintMultipleTokens(alice, [
-      {owner: {Substrate: alice.address}, variableData: 'alice token'},
+      {owner: {Substrate: alice.address}, variableData: 'first alice token'},
       {owner: {Substrate: bob.address}, variableData: 'bob token'},
+      {owner: {Substrate: alice.address}, variableData: 'second alice token'},
     ]);
     await expect(result).toEqual({
       success: true,
@@ -173,10 +198,28 @@ describe('Minting tests', () => {
           collectionId: collection.collectionId,
           owner: {substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)}
         },
+        {
+          tokenId: 4,
+          collectionId: collection.collectionId,
+          owner: {substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)}
+        }
       ]
     });
-    await expect(await collection.getLastTokenId()).toEqual(3);
+    await expect(await collection.getLastTokenId()).toEqual(4);
   });
+
+  it('Test getTokensByAddress', async() => {
+    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const charlie = uniqueHelper.util.fromSeed('//Charlie');
+
+    const aliceTokens = await collection.getTokensByAddress({Substrate: alice.address});
+    const bobTokens = await collection.getTokensByAddress({Substrate: bob.address});
+    const charlieTokens = await collection.getTokensByAddress({Substrate: charlie.address});
+
+    await expect(aliceTokens).toEqual([2, 4]);
+    await expect(bobTokens).toEqual([3]);
+    await expect(charlieTokens).toEqual([]);
+  })
 
   it('Test changeOwner', async() => {
     const bob = uniqueHelper.util.fromSeed('//Bob');

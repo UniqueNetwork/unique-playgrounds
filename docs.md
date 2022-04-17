@@ -208,7 +208,7 @@ await uniqueHelper.getCollection(1); // {id: 1, name: 'SubstraPunks', descriptio
 
 Alternative way via the UniqueNFTCollection:
 ```javascript
-let collection = new UniqueNFTCollection(1, uniqueHelper);
+let collection = uniqueHelper.getCollectionObject(1);
 await collection.getData();
 ```
 
@@ -228,8 +228,82 @@ await uniqueHelper.getCollectionAdmins(1);
 
 Alternative way via the UniqueNFTCollection:
 ```javascript
-let collection = uniqueHelper.getCollectionObject(1);
+let collection = new UniqueNFTCollection(1, uniqueHelper);
 await collection.getAdmins();
+```
+
+
+### getCollectionTokensByAddress
+
+```typescript
+async getCollectionTokensByAddress(collectionId: Number, addressObj: {Substrate?: string, Ethereum?: string}): Promise<Number[]>
+```
+
+Returns array of token ids owned by address in the collection
+
+
+Example:
+```javascript
+await uniqueHelper.getCollectionTokensByAddress(1, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+await collection.getTokensByAddress({Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
+```
+
+
+### getCollectionEffectiveLimits
+
+```typescript
+async getCollectionEffectiveLimits(collectionId: Number): Promise<{
+  accountTokenOwnershipLimit?: Number,
+  sponsoredDataSize?: Number,
+  sponsoredDataRateLimit?: Number,
+  tokenLimit?: Number,
+  sponsorTransferTimeout?: Number,
+  sponsorApproveTimeout?: Number,
+  ownerCanTransfer?: boolean,
+  ownerCanDestroy?: boolean,
+  transfersEnabled?: boolean
+}>
+```
+
+Return the effective limits of the collection instead of null for default values
+
+Example:
+```javascript
+await uniqueHelper.getCollectionEffectiveLimits(1);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = new UniqueNFTCollection(1, uniqueHelper);
+await collection.getEffectiveLimits();
+```
+
+
+### isCollectionTokenExists
+
+```typescript
+async isCollectionTokenExists(collectionId: Number, tokenId: Number): Promise<boolean>
+```
+
+Returns the existence status of token with this tokenId in the collection. Returns bool true on success.
+
+
+Example:
+```javascript
+await uniqueHelper.isCollectionTokenExists(1, 1); // true
+await uniqueHelper.isCollectionTokenExists(1, 99_999); // false
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+await collection.isTokenExists(1); // true
+await collection.isTokenExists(99_999); // false
 ```
 
 

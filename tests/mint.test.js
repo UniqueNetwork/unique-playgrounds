@@ -298,4 +298,26 @@ describe('Minting tests', () => {
       await expect(chainToken.normalizedOwner.substrate).toEqual(bob.address);
     }
   });
+
+  it('Get collection tokens by address', async () => {
+    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const charlie = uniqueHelper.util.fromSeed('//Charlie');
+    const dave = uniqueHelper.util.fromSeed('//Dave');
+
+    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'test rpc tokens', description: 'test collection tokens by rpc', tokenPrefix: 'trt'})).collectionId;
+
+    await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
+      {owner: {Substrate: alice.address}, variableData: 'first alice token'},
+      {owner: {Substrate: bob.address}, variableData: 'bob token'},
+      {owner: {Substrate: charlie.address}, variableData: 'charlie token'},
+      {owner: {Substrate: alice.address}, variableData: 'second alice token'}
+    ]);
+
+    const aliceTokens = await uniqueHelper.getCollectionTokensByAddress(collectionId, {Substrate: alice.address});
+    await expect(aliceTokens).toEqual([1, 4]);
+    const bobTokens = await uniqueHelper.getCollectionTokensByAddress(collectionId, {Substrate: bob.address});
+    await expect(bobTokens).toEqual([2]);
+    const daveTokens = await uniqueHelper.getCollectionTokensByAddress(collectionId, {Substrate: dave.address});
+    await expect(daveTokens).toEqual([]);
+  });
 });

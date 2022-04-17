@@ -407,6 +407,18 @@ class UniqueHelper {
     return normalized;
   }
 
+  async getCollectionTokensByAddress(collectionId, addressObj) {
+    return (await this.api.rpc.unique.accountTokens(collectionId, addressObj)).toJSON()
+  }
+
+  async getCollectionEffectiveLimits(collectionId) {
+    return (await this.api.rpc.unique.effectiveCollectionLimits(collectionId)).toJSON();
+  }
+
+  async isCollectionTokenExists(collectionId, tokenId) {
+    return (await this.api.rpc.unique.tokenExists(collectionId, tokenId)).toJSON()
+  }
+
   async getCollectionLastTokenId(collectionId) {
     return (await this.api.rpc.unique.lastTokenId(collectionId)).toNumber();
   }
@@ -681,6 +693,18 @@ class UniqueNFTCollection {
 
   async getAdmins() {
     return await this.uniqueHelper.getCollectionAdmins(this.collectionId);
+  }
+
+  async getTokensByAddress(addressObj) {
+    return await this.uniqueHelper.getCollectionTokensByAddress(this.collectionId, addressObj);
+  }
+
+  async getEffectiveLimits() {
+    return await this.uniqueHelper.getCollectionEffectiveLimits(this.collectionId);
+  }
+
+  async isTokenExists(tokenId) {
+    return await this.uniqueHelper.isCollectionTokenExists(this.collectionId, tokenId);
   }
 
   async getLastTokenId() {

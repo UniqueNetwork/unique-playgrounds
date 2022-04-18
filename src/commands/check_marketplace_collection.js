@@ -42,23 +42,14 @@ class CheckMarketplaceCollection extends Command {
     }
     else if (sponsorship.confirmed) {
       const address = sponsorship.confirmed;
-      const evmAddress = subToEth(address);
       const normalizedAddress = uniqueHelper.util.normalizeSubstrateAddress(address)
       success(`Sponsor is confirmed, ${address}${address !== normalizedAddress ? ' (Normalized address: ' + normalizedAddress + ')' :''}`);
       {
         const balance = await uniqueHelper.getSubstrateAccountBalance(address);
         if (balance === 0n) {
-          fail(`Substrate wallet of sponsor is empty. Transfer some funds to ${address}`);
+          fail(`Wallet of sponsor is empty. Transfer some funds to ${address}`);
         } else {
-          success(`Sponsor has ${balanceString(balance)} on its substrate wallet`);
-        }
-      }
-      {
-        const balance = await uniqueHelper.getEthereumAccountBalance(evmAddress);
-        if (balance === 0n) {
-          fail(`Ethereum wallet of sponsor is empty. Transfer some funds to ${evmAddress}`);
-        } else {
-          success(`Sponsor has ${balanceString(balance)} on its ethereum wallet`);
+          success(`Sponsor has ${balanceString(balance)} on its wallet`);
         }
       }
     }

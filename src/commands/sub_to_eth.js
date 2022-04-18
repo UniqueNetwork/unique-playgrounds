@@ -36,16 +36,11 @@ class SubToEth extends Command {
         logger.log(logger.fmt(`${address} is not valid substrate address`, 'fg.red'), logger.level.NONE);
         continue;
       }
-      let ethAddress = subToEth(address), subMirrorAddress = evmToAddress(ethAddress);
+      let ethAddress = subToEth(address);
       logger.log([`${logger.fmt('Substrate address', 'fg.cyan')}:`, address], logger.level.NONE);
       let subBalance = balanceString(await uniqueHelper.getSubstrateAccountBalance(address));
-      logger.log([`${logger.fmt('Substrate address balance', 'fg.cyan')}:`, logger.fmt(subBalance, 'fg.yellow')], logger.level.NONE);
+      logger.log([`${logger.fmt('Address balance', 'fg.cyan')}:`, logger.fmt(subBalance, 'fg.yellow')], logger.level.NONE);
       logger.log([`${logger.fmt('Ethereum mirror', 'fg.cyan')}:`, ethAddress], logger.level.NONE);
-      let ethBalance = balanceString(await uniqueHelper.getEthereumAccountBalance(ethAddress));
-      logger.log([`${logger.fmt('Ethereum mirror balance', 'fg.cyan')}:`, logger.fmt(ethBalance, 'fg.yellow')], logger.level.NONE);
-      logger.log([`${logger.fmt('Substrate mirror of ethereum mirror', 'fg.cyan')}:`, subMirrorAddress], logger.level.NONE);
-      let subMirrorBalance = balanceString(await uniqueHelper.getSubstrateAccountBalance(subMirrorAddress));
-      logger.log([`${logger.fmt('Substrate mirror of ethereum mirror balance', 'fg.cyan')}:`, logger.fmt(subMirrorBalance, 'fg.yellow')], logger.level.NONE);
     }
 
     await uniqueHelper.disconnect();

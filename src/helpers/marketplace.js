@@ -87,10 +87,15 @@ const getRemoteMarketplaceSettings = url => {
   let module = (url.indexOf('https://') === 0) ? https : http;
   return new Promise((resolve, reject) => {
     let responseSent = false;
+
     module.get(url, response => {
+      let body = [];
       response.on('data', d => {
-        resolve(JSON.parse(d));
+        body.push(d.toString());
       });
+      response.on('end', () => {
+        resolve(JSON.parse(body.join('')));
+      })
     }).on('error', err => {
       if(responseSent)  return;
       responseSent = true;

@@ -26,27 +26,27 @@ You can import collection and tokens to chain by
 npm run -- command import --ws-endpoint ws://localhost:9944 --signer-seed 'electric suit ...' 1 2
 ```
 
-### Show eth and eth2sub mirrors of substrate accounts
-You can get mirrors of accounts and it's balances by
+### Show eth mirror of substrate accounts
+You can get mirrors of accounts and its balances by
 ```shell
 npm run -- command sub_to_eth --ws-endpoint wss://quartz.unique.network 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY 5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty
 ```
 
 ### Check marketplace configuration
-You can check remote marketplace installation by it's api url
+You can check remote marketplace installation by its api url
 ```shell
 npm run -- command check_marketplace_config https://api.unqnft.io
 ```
 It will check escrow balance, EVM contract and collections
 
 ### Sell token to marketplace
-You can automatically sell token to unique marketplace using it's api url by
+You can automatically sell token to unique marketplace using its api url by
 ```shell
 npm run -- command sell_token_to_marketplace --collection-id 1 --token-id 1 --signer-seed 'electric suit ...' --price 99000000000000 https://api.unqnft.io
 ```
 
 ### Check marketplace contract
-You can check marketplace EVM contract configuration by it's address
+You can check marketplace EVM contract configuration by its address
 ```shell
 npm run -- command check_marketplace_contract --ws-endpoint wss://quartz.unique.network 0x5c03d3976Ad16F50451d95113728E0229C50cAB8
 ```

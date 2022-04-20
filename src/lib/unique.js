@@ -372,11 +372,11 @@ class UniqueHelper {
   }
 
   async getTotalCollectionsCount() {
-    return (await this.api.query.common.createdCollectionCount()).toJSON();
+    return (await this.api.rpc.unique.collectionStats()).created.toNumber();
   }
 
   async getCollection(collectionId) {
-    const collection = await this.api.query.common.collectionById(collectionId);
+    const collection = await this.api.rpc.unique.collectionById(collectionId);
     let humanCollection = collection.toHuman(), collectionData = {
       id: collectionId, name: null, description: null, tokensCount: 0, admins: [],
       raw: humanCollection

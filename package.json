@@ -1,7 +1,7 @@
 {
   "name": "unique-playgrounds",
   "description": "Helpers for Unique Network chain",
-  "version": "918010",
+  "version": "920000",
   "author": "Unique Network",
   "license": "Apache 2.0",
   "scripts": {
@@ -20,7 +20,7 @@
     "@polkadot/wasm-crypto": "5.1.1",
     "@polkadot/keyring": "8.7.1",
     "@polkadot/networks": "8.7.1",
-    "@unique-nft/types": "0.4.0",
+    "@unique-nft/types": "0.5.1",
     "protobufjs": "6.11.2",
     "web3": "1.7.1"
   },

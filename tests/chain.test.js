@@ -7,6 +7,7 @@ describe('Chain state tests', () => {
 
   let uniqueHelper;
   let alice;
+  let bob;
 
   beforeAll(async () => {
     const config = getConfig();
@@ -14,6 +15,7 @@ describe('Chain state tests', () => {
     uniqueHelper = new UniqueHelper(new loggerCls());
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
+    bob   = uniqueHelper.util.fromSeed('//Bob');
   });
 
   afterAll(async () => {
@@ -42,5 +44,23 @@ describe('Chain state tests', () => {
     await expect(blockHash.length).toEqual(66);
     const nonExistentHash = await uniqueHelper.getBlockHashByNumber(lastBlock + 10_000);
     await expect(nonExistentHash).toBeNull();
+  });
+
+  it('Test getCollectionTokenNextSponsored', async () => {
+    expect(await uniqueHelper.getCollectionTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
+
+    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
+    const token = (await uniqueHelper.mintNFTToken(alice, {collectionId, owner: bob.address, variableData: 'bob token', constData: "0x1111"})).token.tokenId;
+
+    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toBeNull();
+
+    await uniqueHelper.setNFTCollectionSponsor(alice, collectionId, alice.address);
+    await uniqueHelper.confirmNFTCollectionSponsorship(alice, collectionId);
+
+    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toEqual(0);
+    await uniqueHelper.transferNFTToken(bob, collectionId, token, {Substrate: alice.address});
+
+    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toEqual(5);
+    await uniqueHelper.transferNFTToken(alice, collectionId, token, {Substrate: bob.address});
   });
 });

@@ -583,6 +583,26 @@ let signer = uniqueHelper.util.fromSeed('//Alice');
 let success = await collection.setConstOnChainSchema(signer, '{"nested":{"onChainMetaData":{"nested":{"NFTMeta":{"fields":{"ipfsJson":{"id":1,"rule":"required","type":"string"},"gender":{"id":2,"rule":"required","type":"Gender"},"traits":{"id":3,"rule":"repeated","type":"PunkTrait"}}},"Gender":{"options":{"Female":"{\"en\": \"Female\"}","Male":"{\"en\": \"Male\"}"},"values":{"Female":1,"Male":0}},"PunkTrait":{"options":{"SMILE":"{\"en\": \"Smile\"}","SUNGLASSES":"{\"en\": \"Sunglasses\"}","MUSTACHE":"{\"en\": \"Mustache\"}","BALD":"{\"en\": \"Bald\"}"},"values":{"SMILE":0,"SUNGLASSES":1,"MUSTACHE":2,"BALD":3}}}}}}');
 ```
 
+### getCollectionTokenNextSponsored
+
+```typescript
+async getCollectionTokenNextSponsored(collectionId : Number, tokenId : Number, addressObj : {Substrate?: string, Ethereum?: string}): Promise<Number | null>
+```
+
+Get number of blocks when sponsored transaction is available. Returns null if sponsorship hasn't been set.
+
+Example:
+
+```javascript
+let test = await uniqueHelper.getCollectionTokenNextSponsored(1, 1, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
+```
+
+Alternative way via the UniqueNFTCollection:
+
+```javascript
+let collection = new UniqueNFTCollection(1, uniqueHelper);
+await collection.getTokenNextSponsored(1, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
+```
 
 ### setNFTCollectionVariableOnChainSchema
 ```typescript

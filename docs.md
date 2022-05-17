@@ -586,7 +586,7 @@ let success = await collection.setConstOnChainSchema(signer, '{"nested":{"onChai
 ### getCollectionTokenNextSponsored
 
 ```typescript
-async getCollectionTokenNextSponsored(collectionId : Number, tokenId : Number, addressObj : {Substrate?: string, Ethereum?: string}): Promise<Number> | null
+async getCollectionTokenNextSponsored(collectionId : Number, tokenId : Number, addressObj : {Substrate?: string, Ethereum?: string}): Promise<Number | null>
 ```
 
 Get number of blocks when sponsored transaction is available. Returns null if sponsorship hasn't been set.
@@ -594,14 +594,14 @@ Get number of blocks when sponsored transaction is available. Returns null if sp
 Example:
 
 ```javascript
-const collectionId = (await helper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
+let test = await uniqueHelper.getCollectionTokenNextSponsored(1, 1, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
+```
 
-const token = (await helper.mintNFTToken(alice, {collectionId, owner: bob.address, variableData: 'bob token', constData: "0x1111"})).token.tokenId;
+Alternative way via the UniqueNFTCollection:
 
-let res = await helper.setNFTCollectionSponsor(alice, collectionId, '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY');
-
-await helper.confirmNFTCollectionSponsorship(alice, collectionId);
-let test = await helper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
+```javascript
+let collection = new UniqueNFTCollection(1, uniqueHelper);
+await collection.getTokenNextSponsored(1, {Substrate: alice.address});
 ```
 
 ### setNFTCollectionVariableOnChainSchema

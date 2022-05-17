@@ -54,7 +54,7 @@ describe('Chain state tests', () => {
 
     await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toBeNull();
 
-    await uniqueHelper.setNFTCollectionSponsor(alice, collectionId, '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY');
+    await uniqueHelper.setNFTCollectionSponsor(alice, collectionId, alice.address);
     await uniqueHelper.confirmNFTCollectionSponsorship(alice, collectionId);
 
     await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toEqual(0);

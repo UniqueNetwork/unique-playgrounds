@@ -317,6 +317,10 @@ class UniqueHelper {
     });
   }
 
+  async getCollectionTokenNextSponsored(collectionId, tokenId, addressObj) {
+    return (await this.api.rpc.unique.nextSponsored(collectionId, addressObj, tokenId)).toJSON();
+  }
+
   async getChainProperties() {
     return (await this.api.registry.getChainProperties()).toHuman();
   }
@@ -781,6 +785,10 @@ class UniqueNFTCollection {
 
   async changeTokenVariableData(signer, tokenId, variableData, label) {
     return await this.uniqueHelper.changeNFTTokenVariableData(signer, this.collectionId, tokenId, variableData, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async getTokenNextSponsored(tokenId, addressObj) {
+    return await this.uniqueHelper.getCollectionTokenNextSponsored(this.collectionId, tokenId, addressObj);
   }
 }
 

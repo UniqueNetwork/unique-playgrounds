@@ -151,6 +151,37 @@ describe('Minting tests', () => {
     });
   });
 
+  it('Test getCollectionTokenNextSponsored', async () => {
+    let bob = uniqueHelper.util.fromSeed('//Bob');
+    expect(await uniqueHelper.getCollectionTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
+
+    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
+    
+    const collection = uniqueHelper.getCollectionObject(collectionId);
+
+    const token = (await collection.mintToken(alice, bob.address, 'bob token', "0x1111")).token.tokenId;
+    
+    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toBeNull;
+
+    await collection.setSponsor(alice, alice.address);
+    await collection.confirmSponsorship(alice);
+
+    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toEqual(0);
+    await collection.transferToken(bob, token, {Substrate: alice.address});
+
+    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toEqual(5);
+    await collection.transferToken(alice, token, {Substrate: bob.address});
+
+    await expect(await collection.getTokenNextSponsored(token, {Substrate: bob.address})).toEqual(4);
+
+    await expect(await collection.getTokenNextSponsored(token + 1, {Substrate: bob.address})).toBeNull();
+
+    await expect(await collection.setLimits(alice, {sponsorTransferTimeout: 2, sponsorApproveTimeout: 2})).toBeTruthy();
+    await collection.transferToken(bob, token, {Substrate: alice.address});
+
+    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toEqual(2);
+  });
+
   it('Test setConstOnChainSchema', async() => {
     let result = await collection.setConstOnChainSchema(alice, EXAMPLE_SCHEMA_JSON);
     await expect(result).toBe(true);

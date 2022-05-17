@@ -601,7 +601,7 @@ Alternative way via the UniqueNFTCollection:
 
 ```javascript
 let collection = new UniqueNFTCollection(1, uniqueHelper);
-await collection.getTokenNextSponsored(1, {Substrate: alice.address});
+await collection.getTokenNextSponsored(1, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
 ```
 
 ### setNFTCollectionVariableOnChainSchema

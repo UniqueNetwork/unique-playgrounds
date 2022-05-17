@@ -52,6 +52,8 @@ describe('Chain state tests', () => {
     const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
     const token = (await uniqueHelper.mintNFTToken(alice, {collectionId, owner: bob.address, variableData: 'bob token', constData: "0x1111"})).token.tokenId;
 
+    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toBeNull();
+
     await uniqueHelper.setNFTCollectionSponsor(alice, collectionId, '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY');
     await uniqueHelper.confirmNFTCollectionSponsorship(alice, collectionId);
 

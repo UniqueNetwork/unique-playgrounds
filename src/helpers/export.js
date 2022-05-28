@@ -6,12 +6,11 @@ const { UniqueUtil } = require('../lib/unique');
 const UNDEFINED = ({}).notdefined;
 
 class UniqueExporter {
-  constructor(uniqueHelper, schemaHelper, exportPath, logger, blockNumber) {
+  constructor(uniqueHelper, exportPath, logger, blockNumber) {
     if(typeof exportPath === 'undefined') exportPath = '.';
     if(typeof logger === 'undefined') logger = UniqueUtil.getDefaultLogger();
     this.exportPath = exportPath;
     this.uniqueHelper = uniqueHelper;
-    this.schemaHelper = schemaHelper;
     this.logger = logger;
     this.blockNumber = blockNumber === null ? UNDEFINED : blockNumber;
   }
@@ -42,29 +41,17 @@ class UniqueExporter {
     let tokenId = startToken;
 
     const tokensCount = collectionData.tokensCount;
-    let schema;
-    try {
-      schema = this.schemaHelper.decodeSchema(collectionData.raw.constOnChainSchema);
-    }
-    catch(e) {
-      schema = null;
-    }
+    const propertyKeys = collectionData.raw.tokenPropertyPermissions.map(x => x.key);
 
     while (true) {
-      const tokenData = await this.uniqueHelper.getToken(collectionData.id, tokenId, this.blockNumber);
+      const tokenData = await this.uniqueHelper.getToken(collectionData.id, tokenId, this.blockNumber, propertyKeys);
       if(!tokenData) {
         if(tokenId >= tokensCount) break;
         tokenId++;
         continue;
       }
-      let decodedConstData;
-      try {
-        decodedConstData = schema ? this.schemaHelper.decodeData(schema, tokenData.constData).data : null;
-      }
-      catch (e) {
-        decodedConstData = null;
-      }
-      yield {tokenId, owner: tokenData.normalizedOwner, chainOwner: tokenData.owner, constData: tokenData.constData, variableData: tokenData.variableData, decodedConstData};
+
+      yield {tokenId, owner: tokenData.normalizedOwner, chainOwner: tokenData.owner, properties: tokenData.properties};
       tokenId++;
     }
   }

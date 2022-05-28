@@ -1,10 +1,8 @@
 const fs = require('fs');
-const os = require('os');
 
-const { UniqueHelper, UniqueSchemaHelper } = require('../src/lib/unique');
+const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
-const { UniqueExporter } = require('../src/helpers/export')
-const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA} = require('./misc/schema.data');
+const { UniqueExporter } = require('../src/helpers/export');
 const { getConfig } = require('./config');
 const { TMPDir } = require('./misc/util');
 
@@ -13,7 +11,6 @@ describe('Export helper tests', () => {
   jest.setTimeout(60 * 60 * 1000);
 
   let uniqueHelper;
-  let schemaHelper;
   let logger;
   let exporter;
   let collectionId = null;
@@ -27,8 +24,7 @@ describe('Export helper tests', () => {
     logger = new loggerCls();
     uniqueHelper = new UniqueHelper(logger);
     await uniqueHelper.connect(config.wsEndpoint);
-    schemaHelper = new UniqueSchemaHelper(logger);
-    exporter = new UniqueExporter(uniqueHelper, schemaHelper, tmpDir.path, logger);
+    exporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
 
@@ -39,8 +35,11 @@ describe('Export helper tests', () => {
 
   it('Export token owners by blockNumber', async () => {
     const bob = uniqueHelper.util.fromSeed('//Bob');
-    let collection = (await uniqueHelper.mintNFTCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'tst'}));
-    await collection.mintToken(alice, alice.address, '', 'alice token');
+    let collection = (await uniqueHelper.mintNFTCollection(alice, {
+      name: 'test', description: 'test', tokenPrefix: 'tst',
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
+    }));
+    await collection.mintToken(alice, alice.address, [{key: 'name', value: 'alice token'}]);
     const lastBlockAfterMint = await uniqueHelper.getLatestBlockNumber();
     const collectionData = await exporter.genCollectionData(collection.collectionId);
 
@@ -48,25 +47,23 @@ describe('Export helper tests', () => {
     const aliceTokenData = {
       tokenId: 1,
       owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)},
-      constData: '',
-      variableData: 'alice token',
-      decodedConstData: null
+      properties: [{key: 'name', value: 'alice token'}]
     };
     await expect(tokens).toEqual([aliceTokenData]);
 
     // Make changes
-    await collection.changeTokenVariableData(alice, 1, 'bob token');
+    await collection.setTokenProperties(alice, 1, [{key: 'name', value: 'bob token'}]);
     await collection.transferToken(alice, 1, {Substrate: bob.address});
 
     tokens = await exporter.getAllTokens(collectionData);
     await expect(tokens).toEqual([{
-      ...aliceTokenData,
-      variableData: 'bob token',
-      owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)}
+      tokenId: 1,
+      owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)},
+      properties: [{key: 'name', value: 'bob token'}]
     }]);
 
     // Get state before changes
-    let newExporter = new UniqueExporter(uniqueHelper, schemaHelper, tmpDir.path, logger, await uniqueHelper.getBlockHashByNumber(lastBlockAfterMint));
+    let newExporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger, await uniqueHelper.getBlockHashByNumber(lastBlockAfterMint));
     tokens = await newExporter.getAllTokens(collectionData);
     await expect(tokens).toEqual([aliceTokenData]);
   });
@@ -76,26 +73,18 @@ describe('Export helper tests', () => {
       name: 'export',
       description: 'collection to export',
       tokenPrefix: 'exp',
-      schemaVersion: 'Unique',
-      constOnChainSchema: EXAMPLE_SCHEMA_JSON
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
     };
     collectionId = (await uniqueHelper.mintNFTCollection(alice, collection)).collectionId;
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const charlie = uniqueHelper.util.fromSeed('//Charlie');
     const dave = uniqueHelper.util.fromSeed('//Dave');
 
-    const expectedData = (traits, gender) => {
-      return {...EXAMPLE_DATA, traits, gender};
-    }
-    const constData = (traits, gender) => {
-      return schemaHelper.encodeData(EXAMPLE_SCHEMA_JSON, expectedData(traits, gender));
-    }
-
     await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
-      {owner: {substrate: alice.address}, constData: constData([0, 1], 1), variableData: 'alice token'},
-      {owner: {Substrate: bob.address}, constData: constData([1, 2], 0), variableData: 'bob token'},
-      {owner: {Substrate: charlie.address}, constData: constData([2, 3], 1), variableData: 'charlie token'},
-      {owner: {Substrate: dave.address}, constData: constData([0, 3], 0), variableData: 'dave token'}
+      {owner: {substrate: alice.address}, properties: [{key: 'name', value: 'alice token'}]},
+      {owner: {Substrate: bob.address}, properties: [{key: 'name', value: 'bob token'}]},
+      {owner: {Substrate: charlie.address}, properties: [{key: 'name', value: 'charlie token'}]},
+      {owner: {Substrate: dave.address}, properties: [{key: 'name', value: 'dave token'}]}
     ]);
 
     let collectionData = await exporter.genCollectionData(collectionId);
@@ -110,14 +99,15 @@ describe('Export helper tests', () => {
       "raw": {
         "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
-        "access": "Normal",
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
         "description": uniqueHelper.util.str2vec(collection.description).map(x => x.toString()),
         "tokenPrefix": collection.tokenPrefix,
-        "mintMode": false,
-        "offchainSchema": "",
-        "schemaVersion": "Unique",
         "sponsorship": "Disabled",
+        "permissions": {
+          "access": "Normal",
+          "mintMode": false,
+          "nesting": "Disabled"
+        },
         "limits": {
           "accountTokenOwnershipLimit": null,
           "sponsoredDataSize": null,
@@ -129,9 +119,8 @@ describe('Export helper tests', () => {
           "ownerCanDestroy": null,
           "transfersEnabled": null
         },
-        "variableOnChainSchema": "",
-        "constOnChainSchema": EXAMPLE_SCHEMA_JSON,
-        "metaUpdatePermission": "ItemOwner"
+        "properties": [],
+        "tokenPropertyPermissions": [{"key": "name", "permission": {"mutable": true, "collectionAdmin": true, "tokenOwner": true}}]
       }
     }
 
@@ -141,30 +130,22 @@ describe('Export helper tests', () => {
       {
         tokenId: 1,
         owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)},
-        constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10011a020001',
-        variableData: 'alice token',
-        decodedConstData: expectedData([0, 1], 1)
+        properties: [{key: 'name', value: 'alice token'}]
       },
       {
         tokenId: 2,
         owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)},
-        constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020102',
-        variableData: 'bob token',
-        decodedConstData: expectedData([1, 2], 0)
+        properties: [{key: 'name', value: 'bob token'}]
       },
       {
         tokenId: 3,
         owner: {substrate: charlie.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(charlie.address)},
-        constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10011a020203',
-        variableData: 'charlie token',
-        decodedConstData: expectedData([2, 3], 1)
+        properties: [{key: 'name', value: 'charlie token'}]
       },
       {
         tokenId: 4,
         owner: {substrate: dave.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(dave.address)},
-        constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020003',
-        variableData: 'dave token',
-        decodedConstData: expectedData([0, 3], 0)
+        properties: [{key: 'name', value: 'dave token'}]
       },
     ];
     await expect(tokens).toEqual(expectedTokens);

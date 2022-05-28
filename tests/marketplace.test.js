@@ -5,7 +5,7 @@ const { evmToAddress } = require('@polkadot/util-crypto');
 
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
-const { connectWeb3, getContract, subToEth, sellTokenToContract, getEvmCollection} = require('../src/helpers/marketplace');
+const { connectWeb3, getContract, sellTokenToContract, getEvmCollection} = require('../src/helpers/marketplace');
 
 const { getConfig } = require('./config');
 const { deployContract } = require('./misc/marketplace/contract');
@@ -57,20 +57,20 @@ describe('Marketplace utils tests', () => {
   });
 
   it('Test sell token to marketplace contract', async () => {
-    const collection = await uniqueHelper.mintNFTCollection(alice, {name: 'to sell', description: 'collection to sell tokens on marketplace', tokenPrefix: 'ts'});
+    const collection = await uniqueHelper.mintNFTCollection(alice, {
+      name: 'to sell', description: 'collection to sell tokens on marketplace', tokenPrefix: 'ts',
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
+    });
     await collection.mintMultipleTokens(alice, [
-      {owner: {Substrate: alice.address}, variableData: 'first token'},
-      {owner: {Substrate: alice.address}, variableData: 'second token'},
-      {owner: {Substrate: alice.address}, variableData: 'third token'}
+      {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'first token'}]},
+      {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'second token'}]},
+      {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'third token'}]}
     ]);
     const contractAddress = await deployOrUseCachedContract();
     const contract = getContract(web3conn.web3, contractAddress);
     const evmCollection = getEvmCollection(web3conn.web3, collection.collectionId);
     let noAsk = await contract.methods.getOrder(evmCollection.options.address, 1).call();
     await expect({tokenId: noAsk.idNFT, price: noAsk.price}).toEqual({tokenId: '0', price: '0'});
-
-    // TODO: remove this after fix billing
-    await uniqueHelper.transferBalanceToSubstrateAccount(alice, evmToAddress(subToEth(alice.address)), 10n * await uniqueHelper.getOneTokenNominal());
 
     let result = await sellTokenToContract(alice, collection.collectionId, 1, 12_000_000_000, contract, uniqueHelper, web3conn.web3);
     await expect(result).toBe(true);

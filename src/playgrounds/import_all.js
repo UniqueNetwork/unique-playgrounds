@@ -4,7 +4,7 @@ const fs = require('fs');
 const { getUsage } = require('../lib/cli');
 const { Logger } = require('../lib/logger');
 
-const { UniqueHelper, UniqueSchemaHelper} = require('../lib/unique');
+const { UniqueHelper} = require('../lib/unique');
 const { UniqueExporter } = require('../helpers/export');
 const { UniqueImporter } = require('../helpers/import');
 
@@ -48,8 +48,7 @@ const main = async (args) => {
     return;
   }
   const importLogger = new Logger();
-  const schemaHelper = new UniqueSchemaHelper(importLogger);
-  const exporter = new UniqueExporter(uniqueHelper, schemaHelper, inputDir, importLogger);
+  const exporter = new UniqueExporter(uniqueHelper, inputDir, importLogger);
   const importer = new UniqueImporter(signer, uniqueHelper, inputDir, importLogger);
 
   let fromCollection = await uniqueHelper.getTotalCollectionsCount() + 1;

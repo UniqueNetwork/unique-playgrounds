@@ -1,6 +1,8 @@
-# UniqueHelper auxiliary classes (minting scripts) and UniqueSchemaHelper (collection schema utilities)
+# UniqueHelper auxiliary class (minting scripts)
 
 ## UniqueHelper methods
+
+### Constructor
 
 UniqueHelper is a class to simplify interaction with the Polkadot API for UniqueNetwork chains. In addition to direct calls, it checks the status of performed transactions, returns identifiers of created objects and normalizes addresses.
 
@@ -21,6 +23,7 @@ await uniqueHelper.connect('wss://quartz.unique.network');
 ```
 
 More usage examples can be found in the `tests` folder, please refer to the `tests/mint.test.js` and `tests/collection.test.js` files.
+
 
 ### connect
 
@@ -44,6 +47,7 @@ Example:
 await uniqueHelper.connect('wss://quartz.unique.network', {error: () => proccess.exit(1)});
 ```
 
+
 ### disconnect
 
 ```typescript
@@ -51,6 +55,7 @@ async disconnect(): void
 ```
 
 A method for disconnecting from the chain's WebSocket interface.
+
 
 ### getChainProperties
 
@@ -68,6 +73,7 @@ Example (for Quartz):
 ```javascript
 await uniqueHelper.getChainProperties(); // {ss58Format: "255", "tokenDecimals": ["18"], "tokenSymbol": ["QTZ"]}
 ```
+
 
 ### getLatestBlockNumber
 ```typescript
@@ -94,6 +100,7 @@ Example:
 let firstBlockHash = await uniqueHelper.getBlockHashByNumber(1); //
 ```
 
+
 ### getOneTokenNominal
 
 ```typescript
@@ -106,6 +113,7 @@ Example (for Quartz):
 ```javascript
 await uniqueHelper.getOneTokenNominal(); // 1_000_000_000_000_000_000n
 ```
+
 
 ### normalizeSubstrateAddressToChainFormat
 
@@ -133,6 +141,7 @@ Example:
 ```javascript
 await uniqueHelper.getSubstrateAccountBalance('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY');
 ```
+
 
 ### getEthereumAccountBalance
 
@@ -174,6 +183,7 @@ Example:
 let totalCollections = await uniqueHelper.getTotalCollectionsCount();
 ```
 
+
 ### getCollectionObject
 ```typescript
 getCollectionObject(collectionId: Number): UniqueNFTCollection
@@ -185,6 +195,7 @@ Example:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 ```
+
 
 ### getCollection
 ```typescript
@@ -329,8 +340,7 @@ await collection.getLastTokenId(); // 10000
 ### getToken
 ```typescript
 async getToken(collectionId: Number, tokenId: Number, blockHashAt?: string): Promise<{
-  constData: string,
-  varibaleData: string,
+  properties?: ({key: string, value: string})[],
   owner: {Substrate?: string, Ethereum?: string},
   normalizedOwner: {substrate?: string, ethereum?: string}
 }>
@@ -340,7 +350,7 @@ Returns information on a token of a specific collection.
 
 Example (for Quartz):
 ```javascript
-await uniqueHelpers.getToken(1, 1); // {constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020311', variableData: '', owner: {Substrate: 'yGGET5XvAHJ53vCeHvGgGfweZ711v89dKaEx6yDKV8xHnyyTY'}, normalizedOwner: { substrate: '5FZeTmbZQZsJcyEevjGVK1HHkcKfWBYxWpbgEffQ2M1SqAnP'}}
+await uniqueHelpers.getToken(1, 1); // {properties: [{key: 'name', value: 'Alice'}], owner: {Substrate: 'yGGET5XvAHJ53vCeHvGgGfweZ711v89dKaEx6yDKV8xHnyyTY'}, normalizedOwner: { substrate: '5FZeTmbZQZsJcyEevjGVK1HHkcKfWBYxWpbgEffQ2M1SqAnP'}}
 ```
 
 Alternative way via the UniqueNFTCollection:
@@ -400,14 +410,15 @@ async mintNFTCollection(
     name: string,
     description: string,
     tokenPrefix: string,
-    offchainSchema?: string,
-    schemaVersion?: "Unique" | "ImageURL",
-    variableOnChainSchema?: string,
-    constOnChainSchema?: string,
-    access?: "AllowList" | "Normal",
     pendingSponsor?: string,
+    permissions: {
+      access?: "AllowList" | "Normal",
+      mintMode?: boolean,
+      nesting?: "Disabled" | "Owner" | {OwnerRestricted: Number[]}
+    },
     limits?: ChainLimits,
-    metaUpdatePermission?: "Admin" | "ItemOwner"
+    properties?: ({key: string, value: string})[],
+    tokenPropertyPermissions?: ({key: string, permission: {mutable?: boolean, collectionAdmin?: boolean, tokenOwner?: boolean}})[]
   }
 ): Promise<UniqueNFTCollection>
 ```
@@ -420,6 +431,7 @@ let signer = uniqueHelper.util.fromSeed('//Alice');
 let collection = await uniqueHelper.mintNFTCollection(signer, {name: 'test', description: 'test description', tokenPrefix: 'tst'});
 await collection.getData(); // ...
 ```
+
 
 ### burnNFTCollection
 ```typescript
@@ -441,48 +453,6 @@ Alternative way via the UniqueNFTCollection:
 let collection = new UniqueNFTCollection(1, uniqueHelper);
 let signer = uniqueHelper.util.fromSeed('//Alice');
 let success = await collection.burn(signer);
-```
-
-
-### setNFTCollectionSchemaVersion
-```typescript
-async setNFTCollectionSchemaVersion(signer: IKeyringPair, collectionId: Number, schemaVersion: "Unique" | "ImageURL"): Promise<boolean>
-```
-
-Sets the schema for the collection. There are currently only two options available. Returns bool true on success.
-
-Example:
-```javascript
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await uniqueHelper.setNFTCollectionSchemaVersion(signer, 1, 'Unique');
-```
-
-Alternative way via the UniqueNFTCollection:
-```javascript
-let collection = uniqueHelper.getCollectionObject(1);
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await collection.setSchemaVersion(signer, 'Unique');
-```
-
-
-### setNFTCollectionOffchainSchema
-```typescript
-async setNFTCollectionOffchainSchema(signer: IKeyringPair, collectionId: Number, offchainSchema: string): Promise<boolean>
-```
-
-Sets the `offchainSchema` property of the collection. Returns bool true on success.
-
-Example:
-```javascript
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await uniqueHelper.setNFTCollectionOffchainSchema(signer, 1, 'https://ipfs.unique.network/ipns/QmaMtDqE9nhMX9RQLTpaCboqg7bqkb6Gi67iCKMe8NDpCE/images/punks/image{id}.png');
-```
-
-Alternative way via the UniqueNFTCollection:
-```javascript
-let collection = new UniqueNFTCollection(1, uniqueHelper);
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await collection.setOffchainSchema(signer, 'https://ipfs.unique.network/ipns/QmaMtDqE9nhMX9RQLTpaCboqg7bqkb6Gi67iCKMe8NDpCE/images/punks/image{id}.png');
 ```
 
 
@@ -694,8 +664,7 @@ async mintNFTToken(
   {
     collectionId: Number,
     owner: string | {Substrate?: string, Ethereum?: string},
-    constData?: string,
-    variableData?: string
+    properties?: ({key: string, value: string})[]
   }
 ): Promise<{
   success: boolean,
@@ -707,19 +676,19 @@ async mintNFTToken(
 }>
 ```
 
-Mints a single new token to the collection. Take special note of the `constData` parameter because once the token is minted this parameter cannot be modified (it’s baked in). Returns an object with the transaction result.
+Mints a single new token to the collection. All properties keys must be present in collection `tokenPropertyPermissions`. Returns an object with the transaction result.
 
 Example:
 ```javascript
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = await uniqueHelper.mintNFTToken(signer, {collectionId: 1, owner: {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, constData: '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020002'});
+let result = await uniqueHelper.mintNFTToken(signer, {collectionId: 1, owner: {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, properties: [{key: 'name', value: 'Alice'}]});
 ```
 
 Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = await collection.mintToken(signer, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020002');
+let result = await collection.mintToken(signer, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, [{key: 'name', value: 'Alice'}]);
 ```
 
 
@@ -730,8 +699,7 @@ async mintMultipleNFTTokens(
   collectionId: Number,
   tokens: ({
     owner: {Substrate?: string, Ethereum?: string},
-    constData?: string,
-    variableData?: string}
+    properties?: ({key: string, value: string})[]
   )[]
 ): Promise<{
   success: boolean,
@@ -743,14 +711,14 @@ async mintMultipleNFTTokens(
 }>
 ```
 
-Mints several new tokens at once to the collection (up to a 100 at a time). Take special note of the `constData` parameter because once the token is minted this parameter cannot be modified (it’s baked in). Returns an object with the transaction result.
+Mints several new tokens at once to the collection (up to a 100 at a time). All properties keys must be present in collection `tokenPropertyPermissions`. Returns an object with the transaction result.
 
 Example:
 ```javascript
 let signer = uniqueHelper.util.fromSeed('//Alice');
 let result = await uniqueHelper.mintMultipleNFTTokens(signer, 1, [
-  { owner: {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, variableData: 'alice token'},
-  { owner: {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'}, variableData: 'bob token'}
+  { owner: {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, properties: [{key: 'name', value: 'Alice'}]},
+  { owner: {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'}, properties: [{key: 'name', value: 'Bob'}]}
 ]);
 ```
 
@@ -759,8 +727,8 @@ Alternative way via the UniqueNFTCollection:
 let collection = new UniqueNFTCollection(1, uniqueHelper);
 let signer = uniqueHelper.util.fromSeed('//Alice');
 let result = await collection.mintMultipleTokens(signer, [
-  { owner: {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, variableData: 'alice token'},
-  { owner: {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'}, variableData: 'bob token'}
+  { owner: {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, properties: [{key: 'name', value: 'Alice'}]},
+  { owner: {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'}, properties: [{key: 'name', value: 'Bob'}]}
 ]);
 ```
 
@@ -793,24 +761,24 @@ let result = collection.burnToken(signer, 1);
 ```
 
 
-### changeNFTTokenVariableData
+### setNFTTokenProperties
 ```typescript
-async changeNFTTokenVariableData(signer: IKeyringPair, collectionId: Number, tokenId: Number): Promise<boolean>
+async setNFTTokenProperties(signer: IKeyringPair, collectionId: Number, tokenId: Number, properties: ({key: string, value: string})[]): Promise<boolean>
 ```
 
-Changes `variableData` of the token. Returns bool true on success.
+Sets (create or overwrite) properties for NFT token. Returns bool true on success.
 
 Example:
 ```javascript
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = await uniqueHelper.changeNFTTokenVariableData(signer, 1, 1, 'alice token');
+let result = await uniqueHelper.setNFTTokenProperties(signer, 1, 1, [{key: 'name', value: 'Alice'}]);
 ```
 
 Alternative way via the UniqueNFTCollection:
 ```javascript
-let collection = new UniqueNFTCollection(1, uniqueHelper);
+let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = collection.changeTokenVariableData(signer, 1, 'alice token');
+let result = collection.setTokenProperties(signer, 1, [{key: 'name', value: 'Alice'}]);
 ```
 
 
@@ -837,98 +805,4 @@ Normalizes the given Substrate address from the chain format to the default ss58
 Example:
 ```javascript
 let aliceNormalized = uniqueHelper.util.normalizeSubstrateAddress('yGHXkYLYqxijLKKfd9Q2CB9shRVu8rPNBS53wvwGTutYg4zTg'); // 5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY
-```
-
-## UniqueSchemaHelper
-
-A set of methods for working with collection schema in the Protobuf format. This type of schema is used in the Unique Network's own collections and projects.
-
-```typescript
-constructor(
-  logger: {
-    log: (msg: string | array, level: string): viod,
-    level: {ERROR: "ERROR", WARNING: "WARNING", INFO: "INFO", DEBUG: "DEBUG", NONE: "NONE"}
-  }
-)
-```
-
-Example:
-```javascript
-const Logger = require('./lib/logger');
-const schemaHelper = new UniqueSchemaHelper(new Logger());
-```
-
-### decodeSchema
-```typescript
-decodeSchema(schema: string | object): {json: object, NFTMeta: null | protobufjs.Type}
-```
-
-Decodes the schema in the Protobuf format. Returns the type that can be used to decode the data.
-
-Example:
-```javascript
-let schema = schemaHelper.decodeSchema('{"nested":{"onChainMetaData":{"nested":{"NFTMeta":{"fields":{"ipfsJson":{"id":1,"rule":"required","type":"string"},"gender":{"id":2,"rule":"required","type":"Gender"},"traits":{"id":3,"rule":"repeated","type":"PunkTrait"}}},"Gender":{"options":{"Female":"{\"en\": \"Female\"}","Male":"{\"en\": \"Male\"}"},"values":{"Female":1,"Male":0}},"PunkTrait":{"options":{"SMILE":"{\"en\": \"Smile\"}","SUNGLASSES":"{\"en\": \"Sunglasses\"}","MUSTACHE":"{\"en\": \"Mustache\"}","BALD":"{\"en\": \"Bald\"}"},"values":{"SMILE":0,"SUNGLASSES":1,"MUSTACHE":2,"BALD":3}}}}}}');
-```
-
-### decodeData
-```typescript
-decodeData(schema: string | {json: object, NFTMeta: protobufjs.Type}, data: string): {data: string | object, human: null | object}
-```
-
-Decodes the given tokens according to the collection schema. Returns both the data itself and its human-readable format, with keys instead of constants.
-
-Example:
-```javascript
-let data = schemaHelper.decodeData(schema, '0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020002');
-//{
-//  data: {
-//    traits: [0,2],
-//    ipfsJson: "{\"ipfs\":\"QmS8YXgfGKgTUnjAPtEf3uf5k4YrFLP2uDcYuNyGLnEiNb\",\"type\":\"image\"}",
-//    gender: 0
-//  },
-//  human: {
-//    ipfsJson: "{\"ipfs\":\"QmS8YXgfGKgTUnjAPtEf3uf5k4YrFLP2uDcYuNyGLnEiNb\",\"type\":\"image\"}",
-//    gender: "Male",
-//    traits: ["SMILE", "MUSTACHE"]
-//  }
-//}
-```
-
-
-### encodeData
-```typescript
-encodeData(schema: string | {json: object, NFTMeta: protobufjs.Type}, payload: object): string
-```
-
-Encodes the token data into the Protobuf format according to the passed collection schema. Returns the encoded string.
-
-Example:
-```javascript
-let encodedData = schemaHelper.encodeData(schema, {
-  traits: [0, 2],
-  ipfsJson: "{\"ipfs\":\"QmS8YXgfGKgTUnjAPtEf3uf5k4YrFLP2uDcYuNyGLnEiNb\",\"type\":\"image\"}",
-  gender: 0
-}); // 0x0a487b2269706673223a22516d533859586766474b6754556e6a4150744566337566356b345972464c503275446359754e79474c6e45694e62222c2274797065223a22696d616765227d10001a020002
-```
-
-### validateData
-```typescript
-validateData(schema: string | {json: object, NFTMeta: protobufjs.Type}, payload: object): {success: boolean, error: null | Error}
-```
-
-Checks that the given data matches the passed schema. Returns an object with the test result.
-
-Example:
-```javascript
-let validData = schemaHelper.validateData(schema, {
-  traits: [0, 2],
-  ipfsJson: "{\"ipfs\":\"QmS8YXgfGKgTUnjAPtEf3uf5k4YrFLP2uDcYuNyGLnEiNb\",\"type\":\"image\"}",
-  gender: 0
-}); // {success: true, error: null}
-
-let invalidData = schemaHelper.validateData(schema, {
-  traits: [5],
-  ipfsJson: "{\"ipfs\":\"QmS8YXgfGKgTUnjAPtEf3uf5k4YrFLP2uDcYuNyGLnEiNb\",\"type\":\"image\"}",
-  gender: 0
-}); // {success: false, error: Error('traits: enum value[] expected')}
 ```

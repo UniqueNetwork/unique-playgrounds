@@ -6,9 +6,9 @@ Helpers for Unique Network chain
 
 `src/lib/unique.js` contains all available minting utils for Unique Network chain.
 
-You can copy this file into your project (It requires only `@polkadot/*` and `@unique-nft/types` packages, see their list in `package.json`)
+You can copy this file into your project (It requires only `@polkadot/*` and `@unique-nft/types` packages (Plus `web3` for nesting), see their list in `package.json`)
 
-You can see documentation in [docs.md](/docs.md) or see usages in tests (like `tests/mint.test.js` and `tests/schema.test.js`)
+You can see documentation in [docs.md](/docs.md) or see usages in tests (like `tests/mint.test.js` and `tests/collection.test.js`)
 
 ## Commands
 

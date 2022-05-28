@@ -1,5 +1,5 @@
 const { Command } = require('../lib/cli');
-const { UniqueHelper, UniqueSchemaHelper } = require('../lib/unique');
+const { UniqueHelper } = require('../lib/unique');
 const { UniqueExporter } = require('../helpers/export');
 const { Logger, SilentLogger } = require('../lib/logger');
 
@@ -42,7 +42,6 @@ class Export extends Command {
     const exportLogger = new (optional.silent ? SilentLogger : Logger)();
     const uniqueHelper = new UniqueHelper(exportLogger);
     await uniqueHelper.connect(wsEndpoint);
-    const schemaHelper = new UniqueSchemaHelper(exportLogger);
 
     let blockHash = null;
     if(blockNumber !== null) {
@@ -52,7 +51,7 @@ class Export extends Command {
       }
     }
 
-    const exporter = new UniqueExporter(uniqueHelper, schemaHelper, outputDir, exportLogger, blockHash);
+    const exporter = new UniqueExporter(uniqueHelper, outputDir, exportLogger, blockHash);
     for(let collectionId of collectionIds) {
       await exporter.export(collectionId, optional.refresh);
     }

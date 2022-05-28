@@ -1,6 +1,4 @@
-const protobuf = require('protobufjs')
 const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
-const { hexToU8a } = require('@polkadot/util');
 const { encodeAddress, decodeAddress } = require('@polkadot/util-crypto');
 
 
@@ -137,100 +135,6 @@ class UniqueUtil {
     isSuccess = isSuccess && JSON.stringify(normalizeAddress(toAddressObj)) === JSON.stringify(transfer.to);
     isSuccess = isSuccess && 1 === transfer.amount;
     return isSuccess;
-  }
-}
-
-
-class UniqueSchemaHelper {
-  constructor(logger) {
-    this.util = UniqueUtil;
-    if (typeof logger == 'undefined') logger = this.util.getDefaultLogger();
-    this.logger = logger;
-  }
-
-  decodeSchema(schema) {
-    const protoJson = typeof schema === 'string' ? JSON.parse(schema) : schema;
-    const root = protobuf.Root.fromJSON(protoJson);
-
-    let data = {json: protoJson, NFTMeta: null}
-
-    try {
-      data.NFTMeta = root.lookupType('onChainMetaData.NFTMeta');
-    } catch (e) {
-    }
-
-    return data;
-  }
-
-  decodeData(schema, data) {
-    if (typeof schema === 'string') schema = this.decodeSchema(schema);
-    if (schema.NFTMeta === null) return {data: data, human: null};
-
-    let tokenDataBuffer;
-    try {
-      tokenDataBuffer = hexToU8a(data);
-    } catch (e) {
-      this.logger.log(e, this.logger.level.WARNING)
-      return {data: data, human: null}
-    }
-
-    let message = schema.NFTMeta.decode(tokenDataBuffer), humanObj = message.toJSON();
-
-    let obj = schema.NFTMeta.toObject(message, {
-      longs: String,  // longs as strings (requires long.js)
-      bytes: String,  // bytes as base64 encoded strings
-      defaults: true, // includes default values
-      arrays: true,   // populates empty arrays (repeated fields) even if defaults=false
-      objects: true,  // populates empty objects (map fields) even if defaults=false
-      oneofs: true
-    });
-
-    return {data: obj, human: humanObj};
-  }
-
-  validateData(schema, payload) {
-    if (typeof schema === 'string') schema = this.decodeSchema(schema);
-
-    try {
-      const NFTMeta = schema.NFTMeta;
-
-      const errMsg = NFTMeta.verify(payload);
-
-      if (errMsg) {
-        return {success: false, error: Error(errMsg)};
-      }
-    }
-    catch(e) {
-      return {success: false, error: e};
-    }
-    return {success: true, error: null};
-  }
-
-  encodeDataBuffer(schema, payload) {
-    if (typeof schema === 'string') schema = this.decodeSchema(schema);
-
-    try {
-      const NFTMeta = schema.NFTMeta;
-
-      const errMsg = NFTMeta.verify(payload);
-
-      if (errMsg) {
-        throw Error(errMsg);
-      }
-
-      const message = NFTMeta.create(payload);
-
-      return NFTMeta.encode(message).finish();
-    } catch (e) {
-      this.logger.log('encodeDataBuffer error', this.logger.level.WARNING);
-      this.logger.log(e, this.logger.level.ERROR);
-    }
-
-    return new Uint8Array(0);
-  }
-
-  encodeData(schema, payload) {
-    return '0x' + Buffer.from(this.encodeDataBuffer(schema, payload)).toString('hex');
   }
 }
 
@@ -427,9 +331,21 @@ class UniqueHelper {
     return (await this.api.rpc.unique.lastTokenId(collectionId)).toNumber();
   }
 
-  async getToken(collectionId, tokenId, blockHashAt) {
-    const tokenData = (await (typeof blockHashAt === 'undefined' ? this.api.query.nonfungible.tokenData(collectionId, tokenId) : this.api.query.nonfungible.tokenData.at(blockHashAt, collectionId, tokenId))).toHuman();
-    if (tokenData === null) return null;
+  async getToken(collectionId, tokenId, blockHashAt, propertyKeys) {
+    let tokenData;
+    if(typeof blockHashAt === 'undefined') {
+      tokenData = await this.api.rpc.unique.tokenData(collectionId, tokenId);
+    }
+    else {
+      if(typeof propertyKeys === 'undefined') {
+        let collection = (await this.api.rpc.unique.collectionById(collectionId)).toHuman();
+        if(!collection) return null;
+        propertyKeys = collection.tokenPropertyPermissions.map(x => x.key);
+      }
+      tokenData = await this.api.rpc.unique.tokenData(collectionId, tokenId, propertyKeys, blockHashAt);
+    }
+    tokenData = tokenData.toHuman();
+    if (tokenData === null || tokenData.owner === null) return null;
     let owner = {};
     for (let key of Object.keys(tokenData.owner)) {
       owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() === 'substrate' ? this.util.normalizeSubstrateAddress(tokenData.owner[key]) : tokenData.owner[key];
@@ -446,6 +362,7 @@ class UniqueHelper {
     );
     return this.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: signer.address}, addressObj);
   }
+
   async transferNFTTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, transactionLabel='api.tx.unique.transferFrom') {
     let result = await this.signTransaction(
       signer,
@@ -480,37 +397,6 @@ class UniqueHelper {
     }
 
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionDestroyed', label);
-  }
-
-  async setNFTCollectionSchemaVersion(signer, collectionId, schemaVersion, label='schema version', transactionLabel='api.tx.unique.setSchemaVersion') {
-    let result;
-    try {
-      result = await this.signTransaction(
-        signer,
-        this.api.tx.unique.setSchemaVersion(collectionId, schemaVersion),
-        transactionLabel
-      );
-    }
-    catch(e) {
-      if(e.toString().indexOf('Cannot map Enum JSON') > -1) throw Error(`Unable to set collection schema version for label ${label}: invalid schema version "${schemaVersion}"`);
-    }
-    if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to set collection schema version for ${label}`);
-    }
-
-    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'SchemaVersionSet', label);
-  }
-
-  async setNFTCollectionOffchainSchema(signer, collectionId, offchainSchema, label='offchain schema', transactionLabel='api.tx.unique.setOffchainSchema') {
-    const result = await this.signTransaction(
-      signer,
-      this.api.tx.unique.setOffchainSchema(collectionId, offchainSchema),
-      transactionLabel
-    );
-    if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to set collection offchain schema for ${label}`);
-    }
-    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'OffchainSchemaSet', label);
   }
 
   async setNFTCollectionSponsor(signer, collectionId, sponsorAddress, label='sponsor', transactionLabel='api.tx.unique.setCollectionSponsor') {
@@ -553,30 +439,6 @@ class UniqueHelper {
       throw Error(`Unable to set collection limits for ${label}`);
     }
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionLimitSet', label);
-  }
-
-  async setNFTCollectionConstOnChainSchema(signer, collectionId, schema, label='collection constOnChainSchema', transactionLabel='api.tx.unique.setConstOnChainSchema') {
-    const result = await this.signTransaction(
-      signer,
-      this.api.tx.unique.setConstOnChainSchema(collectionId, schema),
-      transactionLabel
-    );
-    if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to set collection constOnChainSchema for ${label}`);
-    }
-    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'ConstOnChainSchemaSet', label);
-  }
-
-  async setNFTCollectionVariableOnChainSchema(signer, collectionId, schema, label='collection variableOnChainSchema', transactionLabel='api.tx.unique.setVariableOnChainSchema') {
-    const result = await this.signTransaction(
-      signer,
-      this.api.tx.unique.setVariableOnChainSchema(collectionId, schema),
-      transactionLabel
-    );
-    if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to set collection variableOnChainSchema for ${label}`);
-    }
-    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'VariableOnChainSchemaSet', label);
   }
 
   async changeNFTCollectionOwner(signer, collectionId, ownerAddress, label='collection owner', transactionLabel='api.tx.unique.changeCollectionOwner') {
@@ -624,13 +486,12 @@ class UniqueHelper {
     return this.getCollectionObject(this.util.extractCollectionIdFromCreationResult(creationResult, label));
   }
 
-  async mintNFTToken(signer, { collectionId, owner, constData, variableData }, label = 'new token', transactionLabel = 'api.tx.unique.createItem') {
+  async mintNFTToken(signer, { collectionId, owner, properties }, label = 'new token', transactionLabel = 'api.tx.unique.createItem') {
     const creationResult = await this.signTransaction(
       signer,
       this.api.tx.unique.createItem(collectionId, (owner.Substrate || owner.Ethereum) ? owner : {Substrate: owner}, {
         nft: {
-          const_data: constData,
-          variable_data: variableData
+          properties
         }
       }),
       transactionLabel
@@ -652,8 +513,7 @@ class UniqueHelper {
   async mintMultipleNFTTokensWithOneOwner(signer, collectionId, owner, tokens, label = 'new tokens', transactionLabel = 'api.tx.unique.createMultipleItems') {
     let rawTokens = [];
     for (let token of tokens) {
-      let raw = {NFT: {constData: token.constData}};
-      if (token.variableData) raw.NFT.variableData = token.variableData;
+      let raw = {NFT: {properties: token.properties}};
       rawTokens.push(raw);
     }
     const creationResult = await this.signTransaction(
@@ -675,13 +535,16 @@ class UniqueHelper {
     return {success: burnedTokens.success, token: burnedTokens.tokens.length > 0 ? burnedTokens.tokens[0] : null};
   }
 
-  async changeNFTTokenVariableData(signer, collectionId, tokenId, variableData, label='token with variableData', transactionLabel='api.tx.unique.setVariableMetaData') {
-    const changeResult = await this.signTransaction(
+  async setNFTTokenProperties(signer, collectionId, tokenId, properties, label='set properties', transactionLabel='api.tx.unique.setTokenProperties') {
+    const result = await this.signTransaction(
       signer,
-      this.api.tx.unique.setVariableMetaData(collectionId, tokenId, variableData),
+      this.api.tx.unique.setTokenProperties(collectionId, tokenId, properties),
       transactionLabel
     );
-    return changeResult.status === this.transactionStatus.SUCCESS;
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to change collection owner for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet', label);
   }
 }
 
@@ -731,14 +594,6 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.burnNFTCollection(signer, this.collectionId, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
-  async setSchemaVersion(signer, schemaVersion, label) {
-    return await this.uniqueHelper.setNFTCollectionSchemaVersion(signer, this.collectionId, schemaVersion, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
-  }
-
-  async setOffchainSchema(signer, offchainSchema, label) {
-    return await this.uniqueHelper.setNFTCollectionOffchainSchema(signer, this.collectionId, offchainSchema, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
-  }
-
   async setSponsor(signer, sponsorAddress, label) {
     return await this.uniqueHelper.setNFTCollectionSponsor(signer, this.collectionId, sponsorAddress, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
@@ -749,14 +604,6 @@ class UniqueNFTCollection {
 
   async setLimits(signer, limits, label) {
     return await this.uniqueHelper.setNFTCollectionLimits(signer, this.collectionId, limits, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
-  }
-
-  async setConstOnChainSchema(signer, schema, label) {
-    return await this.uniqueHelper.setNFTCollectionConstOnChainSchema(signer, this.collectionId, schema, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
-  }
-
-  async setVariableOnChainSchema(signer, schema, label) {
-    return await this.uniqueHelper.setNFTCollectionVariableOnChainSchema(signer, this.collectionId, schema, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
   async changeOwner(signer, ownerAddress, label) {
@@ -771,8 +618,8 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.removeNFTCollectionAdmin(signer, this.collectionId, adminAddressObj, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
-  async mintToken(signer, owner, constData, variableData, label) {
-    return await this.uniqueHelper.mintNFTToken(signer, {collectionId: this.collectionId, owner, constData, variableData}, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  async mintToken(signer, owner, properties, label) {
+    return await this.uniqueHelper.mintNFTToken(signer, {collectionId: this.collectionId, owner, properties}, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
   async mintMultipleTokens(signer, tokens, label) {
@@ -783,8 +630,8 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.burnNFTToken(signer, this.collectionId, tokenId, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
-  async changeTokenVariableData(signer, tokenId, variableData, label) {
-    return await this.uniqueHelper.changeNFTTokenVariableData(signer, this.collectionId, tokenId, variableData, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  async setTokenProperties(signer, tokenId, properties, label) {
+    return await this.uniqueHelper.setNFTTokenProperties(signer, this.collectionId, tokenId, properties, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
   async getTokenNextSponsored(tokenId, addressObj) {
@@ -793,5 +640,5 @@ class UniqueNFTCollection {
 }
 
 module.exports = {
-  UniqueHelper, UniqueSchemaHelper, UniqueUtil
+  UniqueHelper, UniqueUtil
 };

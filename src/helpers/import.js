@@ -23,10 +23,8 @@ class ImportState {
       id: null,
       is_burned: false,
       is_created: false,
-      has_schema_version: false,
-      has_offchain_schema: false,
-      has_const_onchain_schema: false,
-      has_variable_onchain_schema: false,
+      has_properties: false,
+      has_token_property_permissions: false,
       has_limits: false,
       has_sponsorship: false,
       changed_ownership: false,
@@ -89,8 +87,7 @@ class UniqueImporter {
       for(let expToken of tokensToCreate) {
         data.push({
           owner: expToken.owner,
-          constData: expToken.constData,
-          variable_data: expToken.variableData
+          properties: expToken.properties
         });
       }
       const tokensToStr = arr => arr.map(x => `${x.tokenId}`).join(', ');
@@ -180,15 +177,11 @@ class UniqueImporter {
     if(!importState.state.is_created) {
       let collectionOptions = {
         mode: {nft: null},
-        access: exportedCollection.raw.access,
         name: exportedCollection.raw.name.map(x => x.split(',').join('')),
         description: exportedCollection.raw.description.map(x => x.split(',').join('')),
         tokenPrefix: exportedCollection.raw.tokenPrefix,
-        offchainSchema: exportedCollection.raw.offchainSchema,
-        schemaVersion: exportedCollection.raw.schemaVersion,
-        variableOnChainSchema: exportedCollection.raw.variableOnChainSchema,
-        constOnChainSchema: exportedCollection.raw.constOnChainSchema,
-        metaUpdatePermission: exportedCollection.raw.metaUpdatePermission
+        properties: exportedCollection.raw.properties,
+        tokenPropertyPermissions: exportedCollection.raw.tokenPropertyPermissions
       };
 
       if(exportedCollection.raw.sponsorship && exportedCollection.raw.sponsorship !== 'Disabled' && exportedCollection.raw.sponsorship.Confirmed) {
@@ -205,39 +198,15 @@ class UniqueImporter {
 
       collectionId = (await this.uniqueHelper.mintNFTCollection(this.signer, collectionOptions, `exported collection #${exportCollectionId}`)).collectionId;
       importState.updateState({
-        is_created: true, id: collectionId, has_schema_version: true, has_offchain_schema: true,
-        has_const_onchain_schema: true, has_variable_onchain_schema: true, has_sponsorship: true, has_limits: true
+        is_created: true, id: collectionId,
+        has_properties: true, has_token_property_permissions: true,
+        has_sponsorship: true, has_limits: true
       });
     }
 
     this.logger.log(`Exported collection #${exportCollectionId} now #${collectionId}`);
 
-    if(!importState.state.has_schema_version) {
-      let result;
-      try {
-        result = await this.uniqueHelper.setNFTCollectionSchemaVersion(this.signer, collectionId, exportedCollection.raw.schemaVersion);
-      }
-      catch (e) {
-        this.logger.log(e, this.logger.level.ERROR);
-        result = false;
-      }
-      importState.updateState({has_schema_version: result});
-    }
-
-    if(!importState.state.has_offchain_schema) {
-      let result = await this.uniqueHelper.setNFTCollectionOffchainSchema(this.signer, collectionId, exportedCollection.raw.offchainSchema);
-      importState.updateState({has_offchain_schema: result});
-    }
-
-    if(!importState.state.has_const_onchain_schema) {
-      let result = await this.uniqueHelper.setNFTCollectionConstOnChainSchema(this.signer, collectionId, exportedCollection.raw.constOnChainSchema);
-      importState.updateState({has_const_onchain_schema: result});
-    }
-
-    if(!importState.state.has_variable_onchain_schema) {
-      let result = await this.uniqueHelper.setNFTCollectionVariableOnChainSchema(this.signer, collectionId, exportedCollection.raw.variableOnChainSchema);
-      importState.updateState({has_variable_onchain_schema: result});
-    }
+    // TODO: add set properties and token_property_permissions
 
     if(!importState.state.has_sponsorship) {
       if(!exportedCollection.raw.sponsorship || exportedCollection.raw.sponsorship === 'Disabled' || !exportedCollection.raw.sponsorship.Confirmed) {

@@ -1,7 +1,7 @@
 const fs = require('fs');
 
 const { Command } = require('../lib/cli');
-const { UniqueHelper, UniqueSchemaHelper } = require('../lib/unique');
+const { UniqueHelper } = require('../lib/unique');
 const { UniqueExporter } = require('../helpers/export');
 const { UniqueImporter } = require('../helpers/import');
 const { Logger, SilentLogger } = require('../lib/logger');
@@ -53,8 +53,7 @@ class Import extends Command {
     if(!optional.silent) {
       logger.log([`${logger.fmt('Signer address (normalized):', 'fg.yellow')}:`, signer.address], logger.level.NONE);
     }
-    const schemaHelper = new UniqueSchemaHelper(exportLogger);
-    const exporter = new UniqueExporter(uniqueHelper, schemaHelper, inputDir, exportLogger);
+    const exporter = new UniqueExporter(uniqueHelper, inputDir, exportLogger);
     const importer = new UniqueImporter(signer, uniqueHelper, outputDir, exportLogger);
     for(let collectionId of collectionIds) {
       let collectionFile = exporter.getCollectionFilename(collectionId);

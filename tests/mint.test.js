@@ -1,7 +1,6 @@
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { subToEth } = require('../src/helpers/marketplace');
-const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA_BINARY } = require('./misc/schema.data');
 const { getConfig } = require('./config');
 
 
@@ -29,16 +28,21 @@ describe('Minting tests', () => {
       name: 'test',
       description: 'test description',
       tokenPrefix: 'tst',
-      offchainSchema: 'custom',
-      schemaVersion: 'Unique',
-      constOnChainSchema: EXAMPLE_SCHEMA_JSON,
-      limits: {
-        ownerCanTransfer: true
-      }
+      properties: [{key: 'is_substrate', value: 'true'}],
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}],
+      // TODO: investigate this
+      // limits: {
+      //   ownerCanTransfer: true
+      // }
     }
     collectionId = (await uniqueHelper.mintNFTCollection(alice, collection)).collectionId;
     await expect(collectionId).not.toBeNull();
     const collectionInfo = await uniqueHelper.getCollection(collectionId);
+
+    // TODO: remove this
+    collection.limits = {
+      ownerCanTransfer: null
+    }
 
     await expect(collectionInfo).toEqual({
       "id": collectionId,
@@ -50,13 +54,14 @@ describe('Minting tests', () => {
       "raw": {
         "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
-        "access": "Normal",
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
         "description": uniqueHelper.util.str2vec(collection.description).map(x => x.toString()),
         "tokenPrefix": collection.tokenPrefix,
-        "mintMode": false,
-        "offchainSchema": collection.offchainSchema,
-        "schemaVersion": collection.schemaVersion,
+        "permissions": {
+          "access": "Normal",
+          "mintMode": false,
+          "nesting": "Disabled"
+        },
         "sponsorship": "Disabled",
         "limits": {
           "accountTokenOwnershipLimit": null,
@@ -69,9 +74,8 @@ describe('Minting tests', () => {
           "ownerCanDestroy": null,
           "transfersEnabled": null
         },
-        "variableOnChainSchema": "",
-        "constOnChainSchema": EXAMPLE_SCHEMA_JSON,
-        "metaUpdatePermission": "ItemOwner"
+        "properties": [{"key": "is_substrate", "value": "true"}],
+        "tokenPropertyPermissions": [{"key": "name", "permission": {"mutable": false, "collectionAdmin": true, "tokenOwner": false}}]
       }
     });
   });
@@ -92,13 +96,14 @@ describe('Minting tests', () => {
       "raw": {
         "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
-        "access": "Normal",
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
         "description": uniqueHelper.util.str2vec(collection.description).map(x => x.toString()),
         "tokenPrefix": collection.tokenPrefix,
-        "mintMode": false,
-        "offchainSchema": "",
-        "schemaVersion": "ImageURL",
+        "permissions": {
+          "access": "Normal",
+          "mintMode": false,
+          "nesting": "Disabled"
+        },
         "sponsorship": "Disabled",
         "limits": {
           "accountTokenOwnershipLimit": null,
@@ -111,9 +116,8 @@ describe('Minting tests', () => {
           "ownerCanDestroy": null,
           "transfersEnabled": null
         },
-        "variableOnChainSchema": "",
-        "constOnChainSchema": "",
-        "metaUpdatePermission": "ItemOwner"
+        "properties": [],
+        "tokenPropertyPermissions": []
       }
     });
   });
@@ -121,22 +125,6 @@ describe('Minting tests', () => {
   it('Burn collection', async () => {
     let burnId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'})).collectionId;
     let result = await uniqueHelper.burnNFTCollection(alice, burnId);
-    await expect(result).toBe(true);
-  });
-
-  it('Set collection schema version', async () => {
-    let result = await uniqueHelper.setNFTCollectionSchemaVersion(alice, collectionId, 'Unique');
-    expect(result).toBe(true);
-    try {
-      await uniqueHelper.setNFTCollectionSchemaVersion(alice, collectionId, 'NotExist', `collection #${collectionId} schemaVersion`);
-    }
-    catch(e) {
-      await expect(e.toString()).toEqual(`Error: Unable to set collection schema version for label collection #${collectionId} schemaVersion: invalid schema version "NotExist"`)
-    }
-  });
-
-  it('Set collection offchain schema', async () => {
-    let result = await uniqueHelper.setNFTCollectionOffchainSchema(alice, collectionId, 'abc');
     await expect(result).toBe(true);
   });
 
@@ -158,16 +146,6 @@ describe('Minting tests', () => {
 
   it('Set collection limits', async () => {
     let result = await uniqueHelper.setNFTCollectionLimits(alice, collectionId, {sponsorTransferTimeout: 0});
-    await expect(result).toBe(true);
-  });
-
-  it('Set collection constOnChainSchema', async () => {
-    let result = await uniqueHelper.setNFTCollectionConstOnChainSchema(alice, collectionId, EXAMPLE_SCHEMA_JSON);
-    await expect(result).toBe(true);
-  });
-
-  it('Set collection variableOnChainSchema', async () => {
-    let result = await uniqueHelper.setNFTCollectionVariableOnChainSchema(alice, collectionId, 'abc');
     await expect(result).toBe(true);
   });
 
@@ -215,15 +193,14 @@ describe('Minting tests', () => {
 
 
   it('Mint token', async () => {
-    const result = await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, constData: EXAMPLE_DATA_BINARY});
+    const result = await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, properties: [{key: 'name', value: 'Alice'}]});
     await expect(result.success).toBe(true);
     await expect(result.token.collectionId).toEqual(collectionId);
     await expect(result.token.tokenId).toEqual(1);
     await expect(uniqueHelper.util.normalizeSubstrateAddress(result.token.owner.substrate)).toEqual(alice.address);
     const tokenData = await uniqueHelper.getToken(collectionId, result.token.tokenId);
     await expect(tokenData).toEqual({
-      constData: EXAMPLE_DATA_BINARY,
-      variableData: '',
+      properties: [{key: 'name', value: 'Alice'}],
       owner: {
         Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)
       },
@@ -234,8 +211,11 @@ describe('Minting tests', () => {
   });
 
   it('Transfer and transferFrom token', async () => {
-    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to test transfer', description: 'collection to test tokens transfer', tokenPrefix: 'ttt'})).collectionId;
-    await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, constData: EXAMPLE_DATA_BINARY});
+    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {
+      name: 'to test transfer', description: 'collection to test tokens transfer', tokenPrefix: 'ttt',
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
+    })).collectionId;
+    await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, properties: [{key: 'name', value: 'Alice'}]});
     let transferResult = await uniqueHelper.transferNFTToken(alice, collectionId, 1, {Ethereum: subToEth(alice.address)});
     await expect(transferResult).toBe(true);
     let currentOwner = (await uniqueHelper.getToken(collectionId, 1)).normalizedOwner;
@@ -259,8 +239,8 @@ describe('Minting tests', () => {
   it('Mint multiple tokens', async () => {
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const result = await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
-      {owner: {substrate: bob.address}, constData: EXAMPLE_DATA_BINARY},
-      {owner: {Substrate: alice.address}, constData: EXAMPLE_DATA_BINARY}
+      {owner: {substrate: bob.address}, properties: [{key: 'name', value: 'Same'}]},
+      {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Same'}]}
     ]);
     await expect(result.success).toBe(true);
     await expect(result.tokens.length).toEqual(2);
@@ -273,8 +253,7 @@ describe('Minting tests', () => {
       await expect(token.collectionId).toEqual(collectionId);
 
       let chainToken = await uniqueHelper.getToken(collectionId, token.tokenId);
-      await expect(chainToken.constData).toEqual(EXAMPLE_DATA_BINARY);
-      await expect(chainToken.variableData).toEqual('');
+      await expect(chainToken.properties).toEqual([{key: 'name', value: 'Same'}]);
       await expect(chainToken.normalizedOwner.substrate).toEqual(expected.owner);
     }
   });
@@ -282,7 +261,7 @@ describe('Minting tests', () => {
   it('Mint multiple tokens with one owner', async () => {
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const result = await uniqueHelper.mintMultipleNFTTokensWithOneOwner(alice, collectionId, bob.address,[
-      {constData: EXAMPLE_DATA_BINARY}, {constData: EXAMPLE_DATA_BINARY}
+      {properties: [{key: 'name', value: 'Same'}]}, {properties: [{key: 'name', value: 'Same'}]}
     ]);
     await expect(result.success).toBe(true);
     await expect(result.tokens.length).toEqual(2);
@@ -293,8 +272,7 @@ describe('Minting tests', () => {
       await expect(token.collectionId).toEqual(collectionId);
 
       let chainToken = await uniqueHelper.getToken(collectionId, token.tokenId);
-      await expect(chainToken.constData).toEqual(EXAMPLE_DATA_BINARY);
-      await expect(chainToken.variableData).toEqual('');
+      await expect(chainToken.properties).toEqual([{key: 'name', value: 'Same'}]);
       await expect(chainToken.normalizedOwner.substrate).toEqual(bob.address);
     }
   });
@@ -307,10 +285,10 @@ describe('Minting tests', () => {
     const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'test rpc tokens', description: 'test collection tokens by rpc', tokenPrefix: 'trt'})).collectionId;
 
     await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
-      {owner: {Substrate: alice.address}, variableData: 'first alice token'},
-      {owner: {Substrate: bob.address}, variableData: 'bob token'},
-      {owner: {Substrate: charlie.address}, variableData: 'charlie token'},
-      {owner: {Substrate: alice.address}, variableData: 'second alice token'}
+      {owner: {Substrate: alice.address}},
+      {owner: {Substrate: bob.address}},
+      {owner: {Substrate: charlie.address}},
+      {owner: {Substrate: alice.address}}
     ]);
 
     const aliceTokens = await uniqueHelper.getCollectionTokensByAddress(collectionId, {Substrate: alice.address});
@@ -320,4 +298,65 @@ describe('Minting tests', () => {
     const daveTokens = await uniqueHelper.getCollectionTokensByAddress(collectionId, {Substrate: dave.address});
     await expect(daveTokens).toEqual([]);
   });
+
+  it('Change token properties', async() => {
+    let collectionId = (await uniqueHelper.mintNFTCollection(alice, {
+      name: 'with properties', description: 'collection with properties', tokenPrefix: 'wp',
+      tokenPropertyPermissions: [
+        {key: 'admin', permission: {mutable: true, collectionAdmin: true, tokenOwner: false}},
+        {key: 'user', permission: {mutable: true, collectionAdmin: false, tokenOwner: true}}
+      ]
+    })).collectionId;
+
+    const bob = uniqueHelper.util.fromSeed('//Bob');
+    await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, 10_000_000_000_000_000_000n);
+
+    const tokenId  = (await uniqueHelper.mintNFTToken(alice, {
+      collectionId, owner: bob.address, properties: [{key: 'admin', value: 'From Alice with love'}]
+    })).token.tokenId;
+
+    await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([{key: 'admin', value: 'From Alice with love'}]);
+
+    // Bob can't change admin property
+    let result = false;
+    try {
+      result = await uniqueHelper.setNFTTokenProperties(bob, collectionId, tokenId, [{key: 'admin', value: 'I cant change this'}]);
+    }
+    catch (e) {
+      await expect(e.status).toEqual('Fail');
+    }
+    await expect(result).toBe(false);
+    await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([{key: 'admin', value: 'From Alice with love'}]);
+
+    // Bob can change user property
+    result = await uniqueHelper.setNFTTokenProperties(bob, collectionId, tokenId, [{key: 'user', value: 'Thanks!'}]);
+    await expect(result).toBe(true);
+    await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([
+      {key: 'admin', value: 'From Alice with love'},
+      {key: 'user', value: 'Thanks!'},
+    ]);
+
+    // Alice can't change user property
+    result = false;
+    try {
+      result = await uniqueHelper.setNFTTokenProperties(alice, collectionId, tokenId, [{key: 'user', value: 'I cant change this'}]);
+    }
+    catch (e) {
+      await expect(e.status).toEqual('Fail');
+    }
+    await expect(result).toBe(false);
+    await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([
+      {key: 'admin', value: 'From Alice with love'},
+      {key: 'user', value: 'Thanks!'},
+    ]);
+
+    // Bob can change admin property
+    result = await uniqueHelper.setNFTTokenProperties(alice, collectionId, tokenId, [{key: 'admin', value: 'What was the question?'}]);
+    await expect(result).toBe(true);
+    await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([
+      {key: 'admin', value: 'What was the question?'},
+      {key: 'user', value: 'Thanks!'},
+    ]);
+  });
+
 });

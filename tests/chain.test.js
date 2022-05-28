@@ -50,7 +50,7 @@ describe('Chain state tests', () => {
     expect(await uniqueHelper.getCollectionTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
 
     const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
-    const token = (await uniqueHelper.mintNFTToken(alice, {collectionId, owner: bob.address, variableData: 'bob token', constData: "0x1111"})).token.tokenId;
+    const token = (await uniqueHelper.mintNFTToken(alice, {collectionId, owner: bob.address})).token.tokenId;
 
     await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toBeNull();
 
@@ -60,7 +60,7 @@ describe('Chain state tests', () => {
     await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toEqual(0);
     await uniqueHelper.transferNFTToken(bob, collectionId, token, {Substrate: alice.address});
 
-    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toEqual(5);
+    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, token, {Substrate: alice.address})).toBeLessThanOrEqual(5);
     await uniqueHelper.transferNFTToken(alice, collectionId, token, {Substrate: bob.address});
   });
 });

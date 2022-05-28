@@ -1,10 +1,9 @@
 const fs = require('fs');
 
-const { UniqueHelper, UniqueSchemaHelper } = require('../src/lib/unique');
+const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { UniqueExporter } = require('../src/helpers/export');
 const { UniqueImporter } = require('../src/helpers/import');
-const { EXAMPLE_SCHEMA_JSON, EXAMPLE_DATA_BINARY } = require('./misc/schema.data');
 const { getConfig } = require('./config');
 const { TMPDir } = require('./misc/util');
 
@@ -20,16 +19,19 @@ describe('Import helper tests', () => {
 
   const createCollection = async () => {
     const dave = uniqueHelper.util.fromSeed('//Dave');
-    collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to import', description: 'collection id to import', tokenPrefix: 'imp', constOnChainSchema: EXAMPLE_SCHEMA_JSON})).collectionId;
+    collectionId = (await uniqueHelper.mintNFTCollection(alice, {
+      name: 'to import', description: 'collection id to import', tokenPrefix: 'imp',
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
+    })).collectionId;
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const charlie = uniqueHelper.util.fromSeed('//Charlie');
     await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
-      {owner: {substrate: bob.address}, constData: EXAMPLE_DATA_BINARY},
-      {owner: {Substrate: alice.address}, constData: EXAMPLE_DATA_BINARY}
+      {owner: {substrate: bob.address}, properties: [{key: 'name', value: 'Bob'}]},
+      {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Alice'}]}
     ]);
     const toBurn = await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address});
     await uniqueHelper.burnNFTToken(alice, toBurn.token.collectionId, toBurn.token.tokenId);
-    await uniqueHelper.mintNFTToken(alice, {collectionId, owner: charlie.address, variableData: 'charlie token', constData: EXAMPLE_DATA_BINARY});
+    await uniqueHelper.mintNFTToken(alice, {collectionId, owner: charlie.address, properties: [{key: 'name', value: 'Charlie'}]});
     await uniqueHelper.addNFTCollectionAdmin(alice, collectionId, {Substrate: dave.address});
     await uniqueHelper.changeNFTCollectionOwner(alice, collectionId, bob.address);
   }
@@ -37,10 +39,8 @@ describe('Import helper tests', () => {
   const expectedState = {
     is_burned: false,
     is_created: true,
-    has_schema_version: true,
-    has_offchain_schema: true,
-    has_const_onchain_schema: true,
-    has_variable_onchain_schema: true,
+    has_properties: true,
+    has_token_property_permissions: true,
     has_limits: true,
     has_sponsorship: true,
     changed_ownership: false
@@ -55,7 +55,7 @@ describe('Import helper tests', () => {
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
     importer = new UniqueImporter(alice, uniqueHelper, tmpDir.path, logger);
-    exporter = new UniqueExporter(uniqueHelper, new UniqueSchemaHelper(logger), tmpDir.path, logger);
+    exporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger);
     await createCollection();
   });
 
@@ -115,17 +115,18 @@ describe('Import helper tests', () => {
   it('Import to existed collection (Only collection)', async () => {
     let collectionData = await exporter.genCollectionData(collectionId);
 
-    let existedCollectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'existed to import', description: 'existed collection id to import', tokenPrefix: 'eimp', constOnChainSchema: EXAMPLE_SCHEMA_JSON})).collectionId;
+    let existedCollectionId = (await uniqueHelper.mintNFTCollection(alice, {
+      name: 'existed to import', description: 'existed collection id to import', tokenPrefix: 'eimp',
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
+    })).collectionId;
 
     let stateFile = importer.getStateFilename(collectionData.id);
     fs.writeFileSync(stateFile, JSON.stringify({
       id: existedCollectionId,
       is_burned: false,
       is_created: true,
-      has_schema_version: false,
-      has_offchain_schema: false,
-      has_const_onchain_schema: false,
-      has_variable_onchain_schema: false,
+      has_properties: true,
+      has_token_property_permissions: true,
       has_limits: true,
       has_sponsorship: true,
       created_tokens: [],

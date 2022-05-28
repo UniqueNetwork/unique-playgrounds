@@ -309,7 +309,7 @@ describe('Minting tests', () => {
     })).collectionId;
 
     const bob = uniqueHelper.util.fromSeed('//Bob');
-    await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, 10_000_000_000_000_000_000n);
+    await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, 10n * await uniqueHelper.getOneTokenNominal());
 
     const tokenId  = (await uniqueHelper.mintNFTToken(alice, {
       collectionId, owner: bob.address, properties: [{key: 'admin', value: 'From Alice with love'}]

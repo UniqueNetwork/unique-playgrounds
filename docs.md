@@ -1,8 +1,6 @@
 # UniqueHelper auxiliary class (minting scripts)
 
-## UniqueHelper methods
-
-### Constructor
+## Constructor
 
 UniqueHelper is a class to simplify interaction with the Polkadot API for UniqueNetwork chains. In addition to direct calls, it checks the status of performed transactions, returns identifiers of created objects and normalizes addresses.
 
@@ -25,7 +23,7 @@ await uniqueHelper.connect('wss://quartz.unique.network');
 More usage examples can be found in the `tests` folder, please refer to the `tests/mint.test.js` and `tests/collection.test.js` files.
 
 
-### connect
+## connect
 
 ```typescript
 async connect(
@@ -48,7 +46,7 @@ await uniqueHelper.connect('wss://quartz.unique.network', {error: () => proccess
 ```
 
 
-### disconnect
+## disconnect
 
 ```typescript
 async disconnect(): void
@@ -57,7 +55,7 @@ async disconnect(): void
 A method for disconnecting from the chain's WebSocket interface.
 
 
-### getChainProperties
+## getChainProperties
 
 ```typescript
 async getChainProperties(): Promise<{
@@ -75,7 +73,7 @@ await uniqueHelper.getChainProperties(); // {ss58Format: "255", "tokenDecimals":
 ```
 
 
-### getLatestBlockNumber
+## getLatestBlockNumber
 ```typescript
 async getLatestBlockNumber(): Promise<Number>
 ```
@@ -88,7 +86,7 @@ let latestBlock = await uniqueHelper.getLatestBlockNumber()
 ```
 
 
-### getBlockHashByNumber
+## getBlockHashByNumber
 ```typescript
 async getBlockHashByNumber(blockNumber: Number): Promise<string | null>
 ```
@@ -101,7 +99,7 @@ let firstBlockHash = await uniqueHelper.getBlockHashByNumber(1); //
 ```
 
 
-### getOneTokenNominal
+## getOneTokenNominal
 
 ```typescript
 async getOneTokenNominal(): Promise<bigint>
@@ -115,7 +113,7 @@ await uniqueHelper.getOneTokenNominal(); // 1_000_000_000_000_000_000n
 ```
 
 
-### normalizeSubstrateAddressToChainFormat
+## normalizeSubstrateAddressToChainFormat
 
 ```typescript
 async normalizeSubstrateAddressToChainFormat(address: string): Promise<string>
@@ -129,7 +127,7 @@ await uniqueHelper.normalizeSubstrateAddressToChainFormat('5GrwvaEF5zXb26Fz9rcQp
 ```
 
 
-### getSubstrateAccountBalance
+## getSubstrateAccountBalance
 
 ```typescript
 async getSubstrateAccountBalance(address: string): Promise<bigint>
@@ -143,7 +141,7 @@ await uniqueHelper.getSubstrateAccountBalance('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpN
 ```
 
 
-### getEthereumAccountBalance
+## getEthereumAccountBalance
 
 ```typescript
 async getEthereumAccountBalance(address: string): Promise<bigint>
@@ -157,7 +155,7 @@ await uniqueHelper.getEthereumAccountBalance('0xd43593c715Fdd31c61141ABd04a99FD6
 ```
 
 
-### transferBalanceToSubstrateAccount
+## transferBalanceToSubstrateAccount
 ```typescript
 async transferBalanceToSubstrateAccount(signer: IKeyringPair, address: string, amount: string | bigint): Promise<boolean>
 ```
@@ -171,7 +169,7 @@ let success = await uniqueHelper.transferBalanceToSubstrateAccount(signer, '5FHn
 ```
 
 
-### getTotalCollectionsCount
+## getTotalCollectionsCount
 ```typescript
 async getTotalCollectionsCount(): Promise<Number>
 ```
@@ -184,7 +182,7 @@ let totalCollections = await uniqueHelper.getTotalCollectionsCount();
 ```
 
 
-### getCollectionObject
+## getCollectionObject
 ```typescript
 getCollectionObject(collectionId: Number): UniqueNFTCollection
 ```
@@ -197,7 +195,7 @@ let collection = uniqueHelper.getCollectionObject(1);
 ```
 
 
-### getCollection
+## getCollection
 ```typescript
 async getCollection(collectionId: Number): Promise<{
   id: Number,
@@ -224,7 +222,7 @@ await collection.getData();
 ```
 
 
-### getCollectionAdmins
+## getCollectionAdmins
 
 ```typescript
 async getCollectionAdmins(collectionId: Number): Promise<({Substrate?: string, Ethereum?: string})[]>
@@ -244,7 +242,7 @@ await collection.getAdmins();
 ```
 
 
-### getCollectionTokensByAddress
+## getCollectionTokensByAddress
 
 ```typescript
 async getCollectionTokensByAddress(collectionId: Number, addressObj: {Substrate?: string, Ethereum?: string}): Promise<Number[]>
@@ -265,7 +263,7 @@ await collection.getTokensByAddress({Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERH
 ```
 
 
-### getCollectionEffectiveLimits
+## getCollectionEffectiveLimits
 
 ```typescript
 async getCollectionEffectiveLimits(collectionId: Number): Promise<{
@@ -295,7 +293,7 @@ await collection.getEffectiveLimits();
 ```
 
 
-### isCollectionTokenExists
+## isCollectionTokenExists
 
 ```typescript
 async isCollectionTokenExists(collectionId: Number, tokenId: Number): Promise<boolean>
@@ -318,7 +316,7 @@ await collection.isTokenExists(99_999); // false
 ```
 
 
-### getCollectionLastTokenId
+## getCollectionLastTokenId
 ```typescript
 async getCollectionLastTokenId(collectionId: Number): Promise<Number>
 ```
@@ -337,7 +335,7 @@ await collection.getLastTokenId(); // 10000
 ```
 
 
-### getToken
+## getToken
 ```typescript
 async getToken(collectionId: Number, tokenId: Number, blockHashAt?: string): Promise<{
   properties?: ({key: string, value: string})[],
@@ -360,7 +358,7 @@ await collection.getToken(1);
 ```
 
 
-### transferNFTToken
+## transferNFTToken
 ```typescript
 async transferNFTToken(signer: IKeyringPair, collectionId: Number, tokenId: Number, addressObj: {Substrate?: string, Ethereum?: string}): Promise<boolean>
 ```
@@ -381,7 +379,7 @@ let success = await collection.transferToken(signer, 1, {Substrate: '5FHneW46xGX
 ```
 
 
-### transferNFTTokenFrom
+## transferNFTTokenFrom
 ```typescript
 async transferNFTTokenFrom(signer: IKeyringPair, collectionId: Number, tokenId: Number, fromAddressObj: {Substrate?: string, Ethereum?: string}, toAddressObj: {Substrate?: string, Ethereum?: string}): Promise<boolean>
 ```
@@ -402,7 +400,7 @@ let success = await collection.transferTokenFrom(signer, 1, {Substrate: '5GrwvaE
 ```
 
 
-### mintNFTCollection
+## mintNFTCollection
 ```typescript
 async mintNFTCollection(
   signer: IKeyringPair,
@@ -433,7 +431,7 @@ await collection.getData(); // ...
 ```
 
 
-### burnNFTCollection
+## burnNFTCollection
 ```typescript
 async burnNFTCollection(signer: IKeyringPair, collectionId: Number): Promise<boolean>
 ```
@@ -456,7 +454,7 @@ let success = await collection.burn(signer);
 ```
 
 
-### setNFTCollectionSponsor
+## setNFTCollectionSponsor
 ```typescript
 async setNFTCollectionSponsor(signer: IKeyringPair, collectionId: Number, sponsorAddress: string): Promise<boolean>
 ```
@@ -477,7 +475,7 @@ let success = await collection.setSponsor(signer, '5GrwvaEF5zXb26Fz9rcQpDWS57CtE
 ```
 
 
-### confirmNFTCollectionSponsorship
+## confirmNFTCollectionSponsorship
 ```typescript
 async confirmNFTCollectionSponsorship(signer: IKeyringPair, collectionId: Number): Promise<boolean>
 ```
@@ -498,7 +496,7 @@ let success = await collection.confirmSponsorship(signer);
 ```
 
 
-### setNFTCollectionLimits
+## setNFTCollectionLimits
 ```typescript
 async setNFTCollectionLimits(
   signer: IKeyringPair,
@@ -533,27 +531,7 @@ let success = await collection.setLimits(signer, {transfersEnabled: false});
 ```
 
 
-### setNFTCollectionConstOnChainSchema
-```typescript
-async setNFTCollectionConstOnChainSchema(signer: IKeyringPair, collectionId: Number, schema: string): Promise<boolean>
-```
-
-Sets the schema for immutable data (`constData`) of collection tokens. Returns bool true on success. Be careful using this method! It is impossible to change the constData in token, so we strongly recommend specify the schema correctly from the very beginning, even before minting the first token, and during minting, check the content through `UniqueSchemaHelper.validateData`.
-
-Example:
-```javascript
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await uniqueHelper.setNFTCollectionConstOnChainSchema(signer, 1, '{"nested":{"onChainMetaData":{"nested":{"NFTMeta":{"fields":{"ipfsJson":{"id":1,"rule":"required","type":"string"},"gender":{"id":2,"rule":"required","type":"Gender"},"traits":{"id":3,"rule":"repeated","type":"PunkTrait"}}},"Gender":{"options":{"Female":"{\"en\": \"Female\"}","Male":"{\"en\": \"Male\"}"},"values":{"Female":1,"Male":0}},"PunkTrait":{"options":{"SMILE":"{\"en\": \"Smile\"}","SUNGLASSES":"{\"en\": \"Sunglasses\"}","MUSTACHE":"{\"en\": \"Mustache\"}","BALD":"{\"en\": \"Bald\"}"},"values":{"SMILE":0,"SUNGLASSES":1,"MUSTACHE":2,"BALD":3}}}}}}');
-```
-
-Alternative way via the UniqueNFTCollection:
-```javascript
-let collection = new UniqueNFTCollection(1, uniqueHelper);
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await collection.setConstOnChainSchema(signer, '{"nested":{"onChainMetaData":{"nested":{"NFTMeta":{"fields":{"ipfsJson":{"id":1,"rule":"required","type":"string"},"gender":{"id":2,"rule":"required","type":"Gender"},"traits":{"id":3,"rule":"repeated","type":"PunkTrait"}}},"Gender":{"options":{"Female":"{\"en\": \"Female\"}","Male":"{\"en\": \"Male\"}"},"values":{"Female":1,"Male":0}},"PunkTrait":{"options":{"SMILE":"{\"en\": \"Smile\"}","SUNGLASSES":"{\"en\": \"Sunglasses\"}","MUSTACHE":"{\"en\": \"Mustache\"}","BALD":"{\"en\": \"Bald\"}"},"values":{"SMILE":0,"SUNGLASSES":1,"MUSTACHE":2,"BALD":3}}}}}}');
-```
-
-### getCollectionTokenNextSponsored
+## getCollectionTokenNextSponsored
 
 ```typescript
 async getCollectionTokenNextSponsored(collectionId : Number, tokenId : Number, addressObj : {Substrate?: string, Ethereum?: string}): Promise<Number | null>
@@ -574,27 +552,8 @@ let collection = new UniqueNFTCollection(1, uniqueHelper);
 await collection.getTokenNextSponsored(1, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
 ```
 
-### setNFTCollectionVariableOnChainSchema
-```typescript
-async setNFTCollectionVariableOnChainSchema(signer: IKeyringPair, collectionId: Number, schema): Promise<boolean>
-```
-Sets the schema for the variable data of the collection tokens (`variableData` token field). Returns bool true on success.
 
-Example:
-```javascript
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await uniqueHelper.setNFTCollectionVariableOnChainSchema(signer, 1, 'abc');
-```
-
-Alternative way via the UniqueNFTCollection:
-```javascript
-let collection = uniqueHelper.getCollectionObject(1);
-let signer = uniqueHelper.util.fromSeed('//Alice');
-let success = await collection.setVariableOnChainSchema(signer, 'abc');
-```
-
-
-### changeNFTCollectionOwner
+## changeNFTCollectionOwner
 ```typescript
 async changeNFTCollectionOwner(signer: IKeyringPair, collectionId: Number, ownerAddress: string): Promise<boolean>
 ```
@@ -615,7 +574,7 @@ let success = await collection.changeOwner(signer, '5GrwvaEF5zXb26Fz9rcQpDWS57Ct
 ```
 
 
-### addNFTCollectionAdmin
+## addNFTCollectionAdmin
 ```typescript
 async addNFTCollectionAdmin(signer: IKeyringPair, collectionId: Number, adminAddressObj: {Substrate?: string, Ethereum?: string}): Promise<boolean>
 ```
@@ -636,7 +595,7 @@ let success = await collection.addAdmin(signer, {Substrate: '5GrwvaEF5zXb26Fz9rc
 ```
 
 
-### removeNFTCollectionAdmin
+## removeNFTCollectionAdmin
 ```typescript
 async removeNFTCollectionAdmin(signer: IKeyringPair, collectionId: Number, adminAddressObj: {Substrate?: string, Ethereum?: string}): Promise<boolean>
 ```
@@ -657,7 +616,7 @@ let success = await collection.removeAdmin(signer, {Substrate: '5GrwvaEF5zXb26Fz
 ```
 
 
-### mintNFTToken
+## mintNFTToken
 ```typescript
 async mintNFTToken(
   signer: IKeyringPair,
@@ -692,7 +651,7 @@ let result = await collection.mintToken(signer, {Substrate: '5GrwvaEF5zXb26Fz9rc
 ```
 
 
-### mintMultipleNFTTokens
+## mintMultipleNFTTokens
 ```typescript
 async mintMultipleNFTTokens(
   signer: IKeyringPair,
@@ -733,7 +692,7 @@ let result = await collection.mintMultipleTokens(signer, [
 ```
 
 
-### burnNFTToken
+## burnNFTToken
 ```typescript
 async burnNFTToken(signer: IKeyringPair, collectionId: Number, tokenId: Number): Promise<{
   success: boolean,
@@ -761,7 +720,7 @@ let result = collection.burnToken(signer, 1);
 ```
 
 
-### setNFTTokenProperties
+## setNFTTokenProperties
 ```typescript
 async setNFTTokenProperties(signer: IKeyringPair, collectionId: Number, tokenId: Number, properties: ({key: string, value: string})[]): Promise<boolean>
 ```
@@ -782,7 +741,91 @@ let result = collection.setTokenProperties(signer, 1, [{key: 'name', value: 'Ali
 ```
 
 
-### util.fromSeed
+## enableCollectionNesting
+```typescript
+async enableCollectionNesting(signer: IKeyringPair, collectionId: Number, restrictedCollectionIds?: Number[]): Promise<boolean>
+```
+
+Enables nesting for selected collection. If `restrictedCollectionIds` set, you can nest only tokens from specified collections. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.enableCollectionNesting(signer, 1);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = collection.enableNesting();
+```
+
+
+## disableCollectionNesting
+```typescript
+async disableCollectionNesting(signer: IKeyringPair, collectionId: Number): Promise<boolean>
+```
+
+Disables nesting for selected collection. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.disableCollectionNesting(signer, 1);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = collection.disableNesting();
+```
+
+
+## nestCollectionToken
+```typescript
+async nestCollectionToken(signer, tokenObj: {tokenId: Number, collectionId: Number}, rootTokenObj: {tokenId: Number, collectionId: Number}): Promise<boolean>
+```
+
+Nest one token to another. Other token collection must have enabled nesting. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.nestCollectionToken(signer, {collectionId: 1, tokenId: 2}, {collectionId: 1, tokenId: 1});
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = collection.nestToken(signer, 2, {collectionId: 1, tokenId: 1});
+```
+
+
+## unnestCollectionToken
+```typescript
+async unnestCollectionToken(signer: IKeyringPair, tokenObj: {tokenId: Number, collectionId: Number}, rootTokenObj: {tokenId: Number, collectionId: Number}, toAddressObj: {Substrate?: string, Ethereum?: string}): Promise<boolean>
+```
+
+Unnest one token from another. You must own root token to do this. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.unnestCollectionToken(signer, {collectionId: 1, tokenId: 2}, {collectionId: 1, tokenId: 1}, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = collection.unnestToken(signer, 2, {collectionId: 1, tokenId: 1}, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
+```
+
+
+## util.fromSeed
 ```typescript
 util.fromSeed(seed: string): IKeyringPair
 ```
@@ -795,7 +838,7 @@ let alice = uniqueHelper.fromSeed('//Alice');
 ```
 
 
-### util.normalizeSubstrateAddress
+## util.normalizeSubstrateAddress
 ```typescript
 util.normalizeSubstrateAddress(address: string): string
 ```

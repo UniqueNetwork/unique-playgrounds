@@ -2,11 +2,46 @@ const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
 const { encodeAddress, decodeAddress } = require('@polkadot/util-crypto');
 
 
+const nesting = {
+  web3: null,
+  loadWeb3() {
+    if(this.web3 !== null) return this.web3;
+    try {
+      this.web3 = require('web3');
+    }
+    catch (e) {
+      throw Error('You need web3 installed to use nesting');
+    }
+    return this.web3;
+  },
+  encodeIntBE(v) {
+    if (v >= 0xffffffff || v < 0) throw new Error('id overflow');
+    return [
+      v >> 24,
+      (v >> 16) & 0xff,
+      (v >> 8) & 0xff,
+      v & 0xff,
+    ];
+  },
+  tokenIdToAddress(collectionId, tokenId) {
+    const buf = Buffer.from([
+      0xf8, 0x23, 0x8c, 0xcf, 0xff, 0x8e, 0xd8, 0x87, 0x46, 0x3f, 0xd5, 0xe0,
+      ...this.encodeIntBE(collectionId),
+      ...this.encodeIntBE(tokenId),
+    ]);
+    return this.loadWeb3().utils.toChecksumAddress('0x' + buf.toString('hex'));
+  }
+}
+
 class UniqueUtil {
   static transactionStatus = {
     NOT_READY: 'NotReady',
     FAIL: 'Fail',
     SUCCESS: 'Success'
+  }
+
+  static getNestingTokenAddress(collectionId, tokenId) {
+    return nesting.tokenIdToAddress(collectionId, tokenId);
   }
 
   static getDefaultLogger() {
@@ -542,9 +577,55 @@ class UniqueHelper {
       transactionLabel
     );
     if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to change collection owner for ${label}`);
+      throw Error(`Unable to set token property for ${label}`);
     }
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet', label);
+  }
+
+  async enableCollectionNesting(signer, collectionId, restrictedCollectionIds, label='enable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
+    let nestingRule = 'Owner'
+    if(typeof restrictedCollectionIds !== 'undefined') {
+      nestingRule = {OwnerRestricted: restrictedCollectionIds}
+    }
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setCollectionPermissions(collectionId, {nesting: nestingRule}),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to enable nesting for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
+  }
+
+  async disableCollectionNesting(signer, collectionId, label='disable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setCollectionPermissions(collectionId, {nesting: 'Disabled'}),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to disable nesting for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
+  }
+
+  async nestCollectionToken(signer, tokenObj, rootTokenObj, label='nest token', transactionLabel='api.tx.unique.transfer') {
+    const rootTokenAddress = {Ethereum: this.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
+    const result = await this.transferNFTToken(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress, transactionLabel);
+    if(!result) {
+      throw Error(`Unable to nest token for ${label}`);
+    }
+    return result;
+  }
+
+  async unnestCollectionToken(signer, tokenObj, rootTokenObj, toAddressObj, label='unnest token', transactionLabel='api.tx.unique.transferFrom') {
+    const rootTokenAddress = {Ethereum: this.util.getNestingTokenAddress(rootTokenObj.collectionId, rootTokenObj.tokenId)};
+    const result = await this.transferNFTTokenFrom(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress, toAddressObj, transactionLabel);
+    if(!result) {
+      throw Error(`Unable to unnest token for ${label}`);
+    }
+    return result;
   }
 }
 
@@ -636,6 +717,22 @@ class UniqueNFTCollection {
 
   async getTokenNextSponsored(tokenId, addressObj) {
     return await this.uniqueHelper.getCollectionTokenNextSponsored(this.collectionId, tokenId, addressObj);
+  }
+
+  async enableNesting(signer, restrictedCollectionIds, label) {
+    return await this.uniqueHelper.enableCollectionNesting(signer, this.collectionId, restrictedCollectionIds, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async disableNesting(signer, label) {
+    return await this.uniqueHelper.disableCollectionNesting(signer, this.collectionId, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async nestToken(signer, tokenId, toTokenObj, label) {
+    return await this.uniqueHelper.nestCollectionToken(signer, {collectionId: this.collectionId, tokenId}, toTokenObj, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async unnestToken(signer, tokenId, fromTokenObj, toAddressObj, label) {
+    return await this.uniqueHelper.unnestCollectionToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 }
 

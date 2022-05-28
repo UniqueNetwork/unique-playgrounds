@@ -7,7 +7,7 @@
   "scripts": {
     "playground": "node cli.js run_playground",
     "command": "node cli.js run_command",
-    "test": "jest --config tests/misc/jest.config.json --maxConcurrency=1"
+    "test": "jest --config tests/misc/jest.config.json --runInBand"
   },
   "engines": {
     "npm": ">=7.0.0",

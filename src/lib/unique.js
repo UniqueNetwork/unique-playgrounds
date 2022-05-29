@@ -401,6 +401,8 @@ class UniqueHelper {
       owner = await this.api.rpc.unique.topmostTokenOwner(collectionId, tokenId, blockHashAt);
     }
 
+    if (owner === null) return null;
+
     owner = owner.toHuman();
 
     return owner.Substrate ? {Substrate: this.util.normalizeSubstrateAddress(owner.Substrate)} : owner;

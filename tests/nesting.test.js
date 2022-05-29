@@ -96,7 +96,7 @@ describe('Nesting tests', () => {
     await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: bob.address});
     await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: bob.address});
 
-    // Now Bob able to unnest eny element from nesting tree (Token #2 for example)
+    // Now Bob able to unnest any element from nesting tree (Token #2 for example)
     await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
     result = await uniqueHelper.unnestCollectionToken(bob, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken}, {Substrate: bob.address});
     await expect(result).toBe(true);

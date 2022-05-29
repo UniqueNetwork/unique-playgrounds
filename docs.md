@@ -998,7 +998,30 @@ let token = uniqueHelper.getCollectionTokenObject(1, 2);
 let signer = uniqueHelper.util.fromSeed('//Alice');
 let result = await token.unnest(signer, {collectionId: 1, tokenId: 1}, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
 ```
+## getTokenTopmostOwner
+```javascript
+async getTokenTopmostOwner(collectionId: Number, tokenId: Number, blockHashAt?: string): Promise<{Substrate?: string, Ethereum?: string} | null>
+```
 
+Get topmost owner of a given token.
+
+```javascript
+let collectionId = 1;
+let tokenId = 2;
+let tokenTopmostOwner = await uniqueHelper.getTokenTopmostOwner(collectionId, tokenId);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let tokenTopmostOwner = await collection.getTokenTopmostOwner(2);
+```
+
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 2);
+let tokenTopmostOwner = await token.getTopmostOwner();
+```
 
 ## util.fromSeed
 ```typescript

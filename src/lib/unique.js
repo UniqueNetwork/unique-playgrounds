@@ -401,7 +401,9 @@ class UniqueHelper {
       owner = await this.api.rpc.unique.topmostTokenOwner(collectionId, tokenId, blockHashAt);
     }
 
-    return owner.toHuman();
+    owner = owner.toHuman();
+
+    return owner.Substrate ? {Substrate: this.util.normalizeSubstrateAddress(owner.Substrate)} : owner;
   }
 
   async transferNFTToken(signer, collectionId, tokenId, addressObj, transactionLabel='api.tx.unique.transfer') {

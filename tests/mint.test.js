@@ -194,11 +194,9 @@ describe('Minting tests', () => {
 
   it('Mint token', async () => {
     const result = await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, properties: [{key: 'name', value: 'Alice'}]});
-    await expect(result.success).toBe(true);
-    await expect(result.token.collectionId).toEqual(collectionId);
-    await expect(result.token.tokenId).toEqual(1);
-    await expect(uniqueHelper.util.normalizeSubstrateAddress(result.token.owner.substrate)).toEqual(alice.address);
-    const tokenData = await uniqueHelper.getToken(collectionId, result.token.tokenId);
+    await expect(result.collectionId).toEqual(collectionId);
+    await expect(result.tokenId).toEqual(1);
+    const tokenData = await uniqueHelper.getToken(collectionId, result.tokenId);
     await expect(tokenData).toEqual({
       properties: [{key: 'name', value: 'Alice'}],
       owner: {
@@ -242,13 +240,11 @@ describe('Minting tests', () => {
       {owner: {substrate: bob.address}, properties: [{key: 'name', value: 'Same'}]},
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Same'}]}
     ]);
-    await expect(result.success).toBe(true);
-    await expect(result.tokens.length).toEqual(2);
+    await expect(result.length).toEqual(2);
     const expectedTokens = [{owner: bob.address, id: 2}, {owner: alice.address, id: 3}];
-    for(let i = 0; i < result.tokens.length; i++) {
-      let token = result.tokens[i];
+    for(let i = 0; i < result.length; i++) {
+      let token = result[i];
       let expected = expectedTokens[i];
-      await expect(uniqueHelper.util.normalizeSubstrateAddress(token.owner.substrate)).toEqual(expected.owner);
       await expect(token.tokenId).toEqual(expected.id);
       await expect(token.collectionId).toEqual(collectionId);
 
@@ -263,11 +259,9 @@ describe('Minting tests', () => {
     const result = await uniqueHelper.mintMultipleNFTTokensWithOneOwner(alice, collectionId, bob.address,[
       {properties: [{key: 'name', value: 'Same'}]}, {properties: [{key: 'name', value: 'Same'}]}
     ]);
-    await expect(result.success).toBe(true);
-    await expect(result.tokens.length).toEqual(2);
-    for(let i = 0; i < result.tokens.length; i++) {
-      let token = result.tokens[i];
-      await expect(uniqueHelper.util.normalizeSubstrateAddress(token.owner.substrate)).toEqual(bob.address);
+    await expect(result.length).toEqual(2);
+    for(let i = 0; i < result.length; i++) {
+      let token = result[i];
       await expect(token.tokenId).toEqual(i + 4);
       await expect(token.collectionId).toEqual(collectionId);
 
@@ -313,7 +307,7 @@ describe('Minting tests', () => {
 
     const tokenId  = (await uniqueHelper.mintNFTToken(alice, {
       collectionId, owner: bob.address, properties: [{key: 'admin', value: 'From Alice with love'}]
-    })).token.tokenId;
+    })).tokenId;
 
     await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([{key: 'admin', value: 'From Alice with love'}]);
 
@@ -357,6 +351,38 @@ describe('Minting tests', () => {
       {key: 'admin', value: 'What was the question?'},
       {key: 'user', value: 'Thanks!'},
     ]);
+  });
+
+  it('Delete token properties', async () => {
+    let collectionId = (await uniqueHelper.mintNFTCollection(alice, {
+      name: 'with properties', description: 'collection with properties', tokenPrefix: 'wp',
+      tokenPropertyPermissions: [
+        {key: 'first', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
+        {key: 'second', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}
+      ]
+    })).collectionId;
+
+    const tokenId  = (await uniqueHelper.mintNFTToken(alice, {
+      collectionId, owner: alice.address, properties: [{key: 'first', value: 'First key'}, {key: 'second', value: 'Second key'}]
+    })).tokenId;
+
+    let info = await uniqueHelper.getToken(collectionId, tokenId);
+    await expect(info.properties).toEqual([{key: 'first', value: 'First key'}, {key: 'second', value: 'Second key'}]);
+
+    let res = await uniqueHelper.deleteNFTTokenProperties(alice, collectionId, tokenId, ['first']);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getToken(collectionId, tokenId);
+    await expect(info.properties).toEqual([{key: 'second', value: 'Second key'}]);
+
+    res = await uniqueHelper.setNFTTokenProperties(alice, collectionId, tokenId, [{key: 'first', value: 'New first'}]);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getToken(collectionId, tokenId);
+    await expect(info.properties).toEqual([{key: 'first', value: 'New first'}, {key: 'second', value: 'Second key'}]);
+
+    res = await uniqueHelper.deleteNFTTokenProperties(alice, collectionId, tokenId, ['first', 'second']);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getToken(collectionId, tokenId);
+    await expect(info.properties).toEqual([]);
   });
 
 });

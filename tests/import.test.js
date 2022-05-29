@@ -30,7 +30,7 @@ describe('Import helper tests', () => {
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Alice'}]}
     ]);
     const toBurn = await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address});
-    await uniqueHelper.burnNFTToken(alice, toBurn.token.collectionId, toBurn.token.tokenId);
+    await toBurn.burn(alice);
     await uniqueHelper.mintNFTToken(alice, {collectionId, owner: charlie.address, properties: [{key: 'name', value: 'Charlie'}]});
     await uniqueHelper.addNFTCollectionAdmin(alice, collectionId, {Substrate: dave.address});
     await uniqueHelper.changeNFTCollectionOwner(alice, collectionId, bob.address);

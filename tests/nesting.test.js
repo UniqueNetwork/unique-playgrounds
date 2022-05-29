@@ -17,7 +17,9 @@ describe('Nesting tests', () => {
   });
 
   afterAll(async () => {
-    await uniqueHelper.disconnect();
+    try {
+      await uniqueHelper.disconnect();
+    } catch (e) {}
   });
 
   it('Test nesting addresses', () => {
@@ -60,34 +62,34 @@ describe('Nesting tests', () => {
     const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to nest', description: 'collection with nesting', tokenPrefix: 'tn'})).collectionId;
     await uniqueHelper.enableCollectionNesting(alice, collectionId);
 
-    const tokens = (await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
+    const [firstToken, secondToken, thirdToken] = (await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
       {owner: {substrate: alice.address}}, {owner: {Substrate: alice.address}}, {owner: {Substrate: alice.address}}
-    ])).tokens.map(x => x.tokenId);
+    ])).map(x => x.tokenId);
 
-    const rootAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, tokens[0]).toLocaleLowerCase()};
+    const rootAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, firstToken).toLocaleLowerCase()};
 
     // Nest token #3 to token #1
-    let result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: tokens[2]}, {collectionId, tokenId: tokens[0]});
+    let result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: thirdToken}, {collectionId, tokenId: firstToken});
     await expect(result).toBe(true);
-    await expect((await uniqueHelper.getToken(collectionId, tokens[2])).normalizedOwner).toEqual(rootAddress);
+    await expect((await uniqueHelper.getToken(collectionId, thirdToken)).normalizedOwner).toEqual(rootAddress);
 
     // Nest token #2 to token #3
-    const thirdTokenAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, tokens[2]).toLocaleLowerCase()};
-    result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: tokens[1]}, {collectionId, tokenId: tokens[2]});
+    const thirdTokenAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, thirdToken).toLocaleLowerCase()};
+    result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken});
     await expect(result).toBe(true);
-    await expect((await uniqueHelper.getToken(collectionId, tokens[1])).normalizedOwner).toEqual(thirdTokenAddress);
+    await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
 
     const bob = uniqueHelper.util.fromSeed('//Bob');
     await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, 10n * await uniqueHelper.getOneTokenNominal());
 
     // Transfer token #1 (Our root) to Bob
-    result = await uniqueHelper.transferNFTToken(alice, collectionId, tokens[0], {Substrate: bob.address});
+    result = await uniqueHelper.transferNFTToken(alice, collectionId, firstToken, {Substrate: bob.address});
     await expect(result).toBe(true);
 
     // Now Bob able to unnest eny element from nesting tree (Token #2 for example)
-    await expect((await uniqueHelper.getToken(collectionId, tokens[1])).normalizedOwner).toEqual(thirdTokenAddress);
-    result = await uniqueHelper.unnestCollectionToken(bob, {collectionId, tokenId: tokens[1]}, {collectionId, tokenId: tokens[2]}, {Substrate: bob.address});
+    await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
+    result = await uniqueHelper.unnestCollectionToken(bob, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken}, {Substrate: bob.address});
     await expect(result).toBe(true);
-    await expect((await uniqueHelper.getToken(collectionId, tokens[1])).normalizedOwner).toEqual({substrate: bob.address});
+    await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual({substrate: bob.address});
   });
 });

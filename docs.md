@@ -195,6 +195,25 @@ let collection = uniqueHelper.getCollectionObject(1);
 ```
 
 
+## getCollectionTokenObject
+```typescript
+getCollectionTokenObject(collectionId: Number, tokenId: Number): UniqueNFTToken
+```
+
+The call will return an initialized UniqueNFTToken object containing a simplified interface for calling methods of a specific token. Allows you to pass fewer arguments later without passing `collectionId` and `tokenId` every time.
+
+Example:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = new UniqueNFTCollection(1, uniqueHelper);
+let token = collection.getTokenObject(1);
+```
+
+
 ## getCollection
 ```typescript
 async getCollection(collectionId: Number): Promise<{
@@ -357,6 +376,12 @@ let collection = uniqueHelper.getCollectionObject(1);
 await collection.getToken(1);
 ```
 
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+await token.getData();
+```
+
 
 ## transferNFTToken
 ```typescript
@@ -378,6 +403,13 @@ let signer = uniqueHelper.util.fromSeed('//Alice');
 let success = await collection.transferToken(signer, 1, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
 ```
 
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let success = token.transfer(signer, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
+```
+
 
 ## transferNFTTokenFrom
 ```typescript
@@ -397,6 +429,13 @@ Alternative way via the UniqueNFTCollection:
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
 let success = await collection.transferTokenFrom(signer, 1, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
+```
+
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let success = token.transferFrom(signer, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'}, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
 ```
 
 
@@ -625,14 +664,7 @@ async mintNFTToken(
     owner: string | {Substrate?: string, Ethereum?: string},
     properties?: ({key: string, value: string})[]
   }
-): Promise<{
-  success: boolean,
-  token: {
-    tokenId: Number,
-    collectionId: Number,
-    owner: {substrate?: string, ethereum?: string}
-  }
-}>
+): Promise<UniqueNFTToken>
 ```
 
 Mints a single new token to the collection. All properties keys must be present in collection `tokenPropertyPermissions`. Returns an object with the transaction result.
@@ -660,14 +692,7 @@ async mintMultipleNFTTokens(
     owner: {Substrate?: string, Ethereum?: string},
     properties?: ({key: string, value: string})[]
   )[]
-): Promise<{
-  success: boolean,
-  tokens: ({
-    tokenId: Number,
-    collectionId: Number,
-    owner: {substrate?: string, ethereum?: string}
-  })[]
-}>
+): Promise<UniqueNFTToken[]>
 ```
 
 Mints several new tokens at once to the collection (up to a 100 at a time). All properties keys must be present in collection `tokenPropertyPermissions`. Returns an object with the transaction result.
@@ -716,7 +741,14 @@ Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = collection.burnToken(signer, 1);
+let result = await collection.burnToken(signer, 1);
+```
+
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await token.burn(signer);
 ```
 
 
@@ -737,9 +769,42 @@ Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = collection.setTokenProperties(signer, 1, [{key: 'name', value: 'Alice'}]);
+let result = await collection.setTokenProperties(signer, 1, [{key: 'name', value: 'Alice'}]);
 ```
 
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await token.setProperties(signer, [{key: 'name', value: 'Alice'}]);
+```
+
+## deleteNFTTokenProperties
+```typescript
+async deleteNFTTokenProperties(signer: IkeyringPair, collectionId: Number, tokenId: Number, propertyKeys: string[]): Promise<boolean>
+```
+
+Deletes properties from NFT token. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.deleteNFTTokenProperties(signer, 1, 1, ['name']);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await collection.deleteTokenProperties(signer, 1, ['name']);
+```
+
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await token.deleteProperties(signer, ['name']);
+```
 
 ## enableCollectionNesting
 ```typescript
@@ -758,7 +823,7 @@ Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = collection.enableNesting();
+let result = await collection.enableNesting();
 ```
 
 
@@ -779,7 +844,7 @@ Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = collection.disableNesting();
+let result = await collection.disableNesting();
 ```
 
 
@@ -800,7 +865,14 @@ Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = collection.nestToken(signer, 2, {collectionId: 1, tokenId: 1});
+let result = await collection.nestToken(signer, 2, {collectionId: 1, tokenId: 1});
+```
+
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 2);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await token.nest(signer, {collectionId: 1, tokenId: 1});
 ```
 
 
@@ -821,7 +893,14 @@ Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = collection.unnestToken(signer, 2, {collectionId: 1, tokenId: 1}, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
+let result = await collection.unnestToken(signer, 2, {collectionId: 1, tokenId: 1}, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
+```
+
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 2);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await token.unnest(signer, {collectionId: 1, tokenId: 1}, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
 ```
 
 

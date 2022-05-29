@@ -92,10 +92,10 @@ class UniqueImporter {
       }
       const tokensToStr = arr => arr.map(x => `${x.tokenId}`).join(', ');
       let newTokens = await this.uniqueHelper.mintMultipleNFTTokens(this.signer, collectionId, data, `Collection #${collectionId} (Tokens #${tokensToStr(tokensToCreate)})`);
-      if (!newTokens.success) throw Error(`Unable to create tokens ${tokensToStr(tokensToCreate)}`);
-      if (tokensToStr(tokensToCreate) !== tokensToStr(newTokens.tokens)) throw Error(`Token has unexpected tokenId (${tokensToStr(newTokens.tokens)} instead of ${tokensToStr(tokensToCreate)})`);
-      this.logger.log(`Created tokens #${tokensToStr(newTokens.tokens)}`);
-      for(let token of newTokens.tokens) {
+      if (newTokens.length < tokensToCreate.length) throw Error(`Unable to create tokens ${tokensToStr(tokensToCreate)}`);
+      if (tokensToStr(tokensToCreate) !== tokensToStr(newTokens)) throw Error(`Token has unexpected tokenId (${tokensToStr(newTokens)} instead of ${tokensToStr(tokensToCreate)})`);
+      this.logger.log(`Created tokens #${tokensToStr(newTokens)}`);
+      for(let token of newTokens) {
         importState.state.created_tokens.push(token.tokenId);
       }
       importState.save();
@@ -111,9 +111,8 @@ class UniqueImporter {
           this.signer, {collectionId, owner: this.signer.address.toString()},
           `Collection #${collectionId} (Token #${tokenId})`
         );
-        if(!toBurn.success) throw Error(`Unable to mint token #${tokenId} for collection #${collectionId}`);
-        toBurn = toBurn.token;
-        let burned = await this.uniqueHelper.burnNFTToken(this.signer, toBurn.collectionId, toBurn.tokenId);
+        if(!toBurn) throw Error(`Unable to mint token #${tokenId} for collection #${collectionId}`);
+        let burned = await toBurn.burn(this.signer);
         if(!burned) throw Error(`Unable to burn token #${toBurn.tokenId} for collection #${toBurn.collectionId}`);
         this.logger.log(`Burned token #${toBurn.tokenId}`);
         importState.state.created_tokens.push(toBurn.tokenId);

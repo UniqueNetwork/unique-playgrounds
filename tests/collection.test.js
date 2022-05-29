@@ -18,7 +18,6 @@ describe('Minting tests', () => {
     const config = getConfig();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
-    // config.wsEndpoint = 'wss://quartz.unique.network';
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
     collection = await uniqueHelper.mintNFTCollection(alice, collectionOptions);
@@ -43,14 +42,10 @@ describe('Minting tests', () => {
 
   it('Test mintToken', async() => {
     let token = await collection.mintToken(alice, alice.address, [{key: 'name', value: 'Alice'}]);
-    await expect(token).toEqual({
-      success: true,
-      token: {
-        tokenId: 1,
-        collectionId: collection.collectionId,
-        owner: {substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)}
-      }
-    });
+    await expect(token.tokenId).toEqual(1);
+    await expect(token.collectionId).toEqual(collection.collectionId);
+    await expect((await token.getData()).normalizedOwner).toEqual({substrate: alice.address});
+
     await expect(await collection.getLastTokenId()).toEqual(1);
   });
 
@@ -141,27 +136,27 @@ describe('Minting tests', () => {
 
     const collection = uniqueHelper.getCollectionObject(collectionId);
 
-    const token = (await collection.mintToken(alice, bob.address)).token.tokenId;
+    const tokenId = (await collection.mintToken(alice, bob.address)).tokenId;
 
-    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toBeNull;
+    await expect(await collection.getTokenNextSponsored(tokenId, {Substrate: alice.address})).toBeNull;
 
     await collection.setSponsor(alice, alice.address);
     await collection.confirmSponsorship(alice);
 
-    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toEqual(0);
-    await collection.transferToken(bob, token, {Substrate: alice.address});
+    await expect(await collection.getTokenNextSponsored(tokenId, {Substrate: alice.address})).toEqual(0);
+    await collection.transferToken(bob, tokenId, {Substrate: alice.address});
 
-    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toBeLessThanOrEqual(5);
-    await collection.transferToken(alice, token, {Substrate: bob.address});
+    await expect(await collection.getTokenNextSponsored(tokenId, {Substrate: alice.address})).toBeLessThanOrEqual(5);
+    await collection.transferToken(alice, tokenId, {Substrate: bob.address});
 
-    await expect(await collection.getTokenNextSponsored(token, {Substrate: bob.address})).toBeLessThanOrEqual(4);
+    await expect(await collection.getTokenNextSponsored(tokenId, {Substrate: bob.address})).toBeLessThanOrEqual(4);
 
-    await expect(await collection.getTokenNextSponsored(token + 1, {Substrate: bob.address})).toBeNull();
+    await expect(await collection.getTokenNextSponsored(tokenId + 1, {Substrate: bob.address})).toBeNull();
 
     await expect(await collection.setLimits(alice, {sponsorTransferTimeout: 2, sponsorApproveTimeout: 2})).toBeTruthy();
-    await collection.transferToken(bob, token, {Substrate: alice.address});
+    await collection.transferToken(bob, tokenId, {Substrate: alice.address});
 
-    await expect(await collection.getTokenNextSponsored(token, {Substrate: alice.address})).toBeLessThanOrEqual(2);
+    await expect(await collection.getTokenNextSponsored(tokenId, {Substrate: alice.address})).toBeLessThanOrEqual(2);
   });
 
   it('Test addAdmin', async() => {
@@ -185,26 +180,20 @@ describe('Minting tests', () => {
       {owner: {Substrate: bob.address}, properties: [{key: 'name', value: 'Bob'}]},
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Alice jr'}]},
     ]);
-    await expect(result).toEqual({
-      success: true,
-      tokens: [
-        {
-          tokenId: 2,
-          collectionId: collection.collectionId,
-          owner: {substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)}
-        },
-        {
-          tokenId: 3,
-          collectionId: collection.collectionId,
-          owner: {substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)}
-        },
-        {
-          tokenId: 4,
-          collectionId: collection.collectionId,
-          owner: {substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)}
-        }
-      ]
-    });
+    await expect(result.map(x => ({tokenId: x.tokenId, collectionId: x.collectionId}))).toEqual([
+      {
+        tokenId: 2,
+        collectionId: collection.collectionId,
+      },
+      {
+        tokenId: 3,
+        collectionId: collection.collectionId,
+      },
+      {
+        tokenId: 4,
+        collectionId: collection.collectionId,
+      }
+    ]);
     await expect(await collection.getLastTokenId()).toEqual(4);
   });
 

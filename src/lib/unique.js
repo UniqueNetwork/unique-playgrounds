@@ -341,6 +341,10 @@ class UniqueHelper {
     return new UniqueNFTCollection(collectionId, this);
   }
 
+  getCollectionTokenObject(collectionId, tokenId) {
+    return new UniqueNFTToken(tokenId, this.getCollectionObject(collectionId));
+  }
+
   async getCollectionAdmins(collectionId) {
     let normalized = [];
     for(let admin of (await this.api.rpc.unique.adminlist(collectionId)).toHuman()) {
@@ -533,7 +537,7 @@ class UniqueHelper {
     );
     const createdTokens = this.util.extractTokensFromCreationResult(creationResult, label);
     if (createdTokens.tokens.length > 1) throw Error('Created multiple tokens');
-    return {success: createdTokens.success, token: createdTokens.tokens.length > 0 ? createdTokens.tokens[0] : null}
+    return createdTokens.tokens.length > 0 ? this.getCollectionTokenObject(collectionId, createdTokens.tokens[0].tokenId) : null;
   }
 
   async mintMultipleNFTTokens(signer, collectionId, tokens, label = 'new tokens', transactionLabel = 'api.tx.unique.createMultipleItemsEx') {
@@ -542,7 +546,8 @@ class UniqueHelper {
       this.api.tx.unique.createMultipleItemsEx(collectionId, {NFT: tokens}),
       transactionLabel
     );
-    return this.util.extractTokensFromCreationResult(creationResult, label);
+    const collection = this.getCollectionObject(collectionId);
+    return this.util.extractTokensFromCreationResult(creationResult, label).tokens.map(x => collection.getTokenObject(x.tokenId));
   }
 
   async mintMultipleNFTTokensWithOneOwner(signer, collectionId, owner, tokens, label = 'new tokens', transactionLabel = 'api.tx.unique.createMultipleItems') {
@@ -556,7 +561,8 @@ class UniqueHelper {
       this.api.tx.unique.createMultipleItems(collectionId, {Substrate: owner}, rawTokens),
       transactionLabel
     );
-    return this.util.extractTokensFromCreationResult(creationResult, label);
+    const collection = this.getCollectionObject(collectionId);
+    return this.util.extractTokensFromCreationResult(creationResult, label).tokens.map(x => collection.getTokenObject(x.tokenId));
   }
 
   async burnNFTToken(signer, collectionId, tokenId, label = 'burned token', transactionLabel = 'api.tx.unique.burnItem') {
@@ -577,9 +583,21 @@ class UniqueHelper {
       transactionLabel
     );
     if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to set token property for ${label}`);
+      throw Error(`Unable to set token properties for ${label}`);
     }
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet', label);
+  }
+
+  async deleteNFTTokenProperties(signer, collectionId, tokenId, propertyKeys, label='delete properties', transactionLabel='api.tx.unique.deleteTokenProperties') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.deleteTokenProperties(collectionId, tokenId, propertyKeys),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to delete token properties for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertyDeleted', label);
   }
 
   async enableCollectionNesting(signer, collectionId, restrictedCollectionIds, label='enable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
@@ -633,6 +651,10 @@ class UniqueNFTCollection {
   constructor(collectionId, uniqueHelper) {
     this.collectionId = collectionId;
     this.uniqueHelper = uniqueHelper;
+  }
+
+  getTokenObject(tokenId) {
+    return new UniqueNFTToken(tokenId, this);
   }
 
   async getData() {
@@ -715,6 +737,10 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.setNFTTokenProperties(signer, this.collectionId, tokenId, properties, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
+  async deleteTokenProperties(signer, tokenId, propertyKeys, label) {
+    return await this.uniqueHelper.deleteNFTTokenProperties(signer, this.collectionId, tokenId, propertyKeys, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
   async getTokenNextSponsored(tokenId, addressObj) {
     return await this.uniqueHelper.getCollectionTokenNextSponsored(this.collectionId, tokenId, addressObj);
   }
@@ -733,6 +759,47 @@ class UniqueNFTCollection {
 
   async unnestToken(signer, tokenId, fromTokenObj, toAddressObj, label) {
     return await this.uniqueHelper.unnestCollectionToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+}
+
+
+class UniqueNFTToken {
+  constructor(tokenId, collection) {
+    this.collection = collection;
+    this.collectionId = collection.collectionId;
+    this.tokenId = tokenId;
+  }
+
+  async getData(blockHashAt) {
+    return await this.collection.getToken(this.tokenId, blockHashAt);
+  }
+
+  async nest(signer, toTokenObj, label) {
+    return await this.collection.nestToken(signer, this.tokenId, toTokenObj, label);
+  }
+
+  async unnest(signer, fromTokenObj, toAddressObj, label) {
+    return await this.collection.unnestToken(signer, this.tokenId, fromTokenObj, toAddressObj, label);
+  }
+
+  async setProperties(signer, properties, label) {
+    return await this.collection.setTokenProperties(signer, this.tokenId, properties, label);
+  }
+
+  async deleteProperties(signer, propertyKeys, label) {
+    return await this.collection.deleteTokenProperties(signer, this.tokenId, propertyKeys, label);
+  }
+
+  async transfer(signer, addressObj) {
+    return await this.collection.transferToken(signer, this.tokenId, addressObj);
+  }
+
+  async transferFrom(signer, fromAddressObj, toAddressObj) {
+    return await this.collection.transferTokenFrom(signer, this.tokenId, fromAddressObj, toAddressObj);
+  }
+
+  async burn(signer, label) {
+    return await this.collection.burnToken(signer, this.tokenId, label);
   }
 }
 

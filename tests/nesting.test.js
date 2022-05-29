@@ -73,11 +73,17 @@ describe('Nesting tests', () => {
     await expect(result).toBe(true);
     await expect((await uniqueHelper.getToken(collectionId, thirdToken)).normalizedOwner).toEqual(rootAddress);
 
+    // The topmost owner of the token #3 is still Alice
+    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: alice.address});
+
     // Nest token #2 to token #3
     const thirdTokenAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, thirdToken).toLocaleLowerCase()};
     result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken});
     await expect(result).toBe(true);
     await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
+
+    // The topmost owner of the token #2 is still Alice
+    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: alice.address});
 
     const bob = uniqueHelper.util.fromSeed('//Bob');
     await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, 10n * await uniqueHelper.getOneTokenNominal());
@@ -85,6 +91,10 @@ describe('Nesting tests', () => {
     // Transfer token #1 (Our root) to Bob
     result = await uniqueHelper.transferNFTToken(alice, collectionId, firstToken, {Substrate: bob.address});
     await expect(result).toBe(true);
+
+    // Bob now root-owns Token #2 and #3
+    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: bob.address});
+    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: bob.address});
 
     // Now Bob able to unnest eny element from nesting tree (Token #2 for example)
     await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);

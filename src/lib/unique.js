@@ -393,6 +393,17 @@ class UniqueHelper {
     return tokenData;
   }
 
+  async getTokenTopmostOwner(collectionId, tokenId, blockHashAt) {
+    let owner;
+    if (typeof blockHashAt === 'undefined') {
+      owner = await this.api.rpc.unique.topmostTokenOwner(collectionId, tokenId);
+    } else {
+      owner = await this.api.rpc.unique.topmostTokenOwner(collectionId, tokenId, blockHashAt);
+    }
+
+    return owner.toHuman();
+  }
+
   async transferNFTToken(signer, collectionId, tokenId, addressObj, transactionLabel='api.tx.unique.transfer') {
     let result = await this.signTransaction(
       signer,
@@ -717,6 +728,10 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.getToken(this.collectionId, tokenId, blockHashAt);
   }
 
+  async getTokenTopmostOwner(tokenId, blockHashAt) {
+    return await this.uniqueHelper.getTokenTopmostOwner(this.collectionId, tokenId, blockHashAt);
+  }
+
   async transferToken(signer, tokenId, addressObj) {
     return await this.uniqueHelper.transferNFTToken(signer, this.collectionId, tokenId, addressObj);
   }
@@ -820,6 +835,10 @@ class UniqueNFTToken {
 
   async getData(blockHashAt) {
     return await this.collection.getToken(this.tokenId, blockHashAt);
+  }
+
+  async getTopmostOwner(blockHashAt) {
+    return await this.collection.getTokenTopmostOwner(this.tokenId, blockHashAt);
   }
 
   async nest(signer, toTokenObj, label) {

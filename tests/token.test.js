@@ -44,6 +44,11 @@ describe('Minting tests', () => {
     await expect(info.properties).toEqual([{key: 'name', value: 'second token'}]);
   });
 
+  it('Test getNextSponsored', async() => {
+    let nextSponsored = await firstToken.getNextSponsored({Substrate: alice.address});
+    await expect(nextSponsored).toBeNull();
+  });
+
   it('Test setProperties', async() => {
     let res = await firstToken.setProperties(alice, [{key: 'name', value: 'modified first'}]);
     await expect(res).toBe(true);

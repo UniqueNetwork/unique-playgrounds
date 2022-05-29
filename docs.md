@@ -591,6 +591,13 @@ let collection = new UniqueNFTCollection(1, uniqueHelper);
 await collection.getTokenNextSponsored(1, {Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
 ```
 
+Alternative way via the UniqueNFTToken:
+
+```javascript
+let token = new UniqueNFTToken(1, 1, uniqueHelper);
+await token.getNextSponsored({Substrate: '5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty'});
+```
+
 
 ## changeNFTCollectionOwner
 ```typescript
@@ -752,6 +759,69 @@ let result = await token.burn(signer);
 ```
 
 
+## setCollectionProperties
+```typescript
+async setCollectionProperties(signer: IKeyringPair, collectionId: Number, properties: ({key: string, value: string})[]): Promise<boolean>
+```
+
+Sets onchain properties to the collection. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.setCollectionProperties(signer, 1, [{key: 'is_substrate', value: 'true'}]);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await collection.setProperties(signer, [{key: 'is_substrate', value: 'true'}]);
+```
+
+
+## deleteCollectionProperties
+```typescript
+async deleteCollectionProperties(signer: IKeyringPair, collectionId: Number, propertyKeys: string[]): Promise<boolean>
+```
+
+Deletes onchain properties from the collection. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.deleteCollectionProperties(signer, 1, ['is_substrate']);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await collection.deleteProperties(signer, ['is_substrate']);
+```
+
+
+## setTokenPropertyPermissions
+```typescript
+async setTokenPropertyPermissions(signer: IKeyringPair, collectionId: Number, permissions: ({key: string, permission: {mutable: boolean, collectionAdmin: boolean, tokenOwner: boolean}})[]): Promise<boolean>
+```
+
+Sets permissions for token properties. Token can contain only properties with permissions. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.setTokenPropertyPermissions(signer, 1, [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await collection.setTokenPropertyPermissions(signer,  [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]);
+```
+
+
 ## setNFTTokenProperties
 ```typescript
 async setNFTTokenProperties(signer: IKeyringPair, collectionId: Number, tokenId: Number, properties: ({key: string, value: string})[]): Promise<boolean>
@@ -805,6 +875,32 @@ let token = uniqueHelper.getCollectionTokenObject(1, 1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
 let result = await token.deleteProperties(signer, ['name']);
 ```
+
+
+## setCollectionPermissions
+```typescript
+async setCollectionPermissions(signer: IKeyringPair, collectionId: Number, permissions: {
+    access?: 'Normal' | 'AllowList',
+    mintMode?: boolean,
+    nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: Number[]}
+}): Promise<boolean>
+```
+
+Sets onchain permissions for selected collection. Returns bool true on success.
+
+Example:
+```javascript
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await uniqueHelper.setCollectionPermissions(signer, 1, {mintMode: false});
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let signer = uniqueHelper.util.fromSeed('//Alice');
+let result = await collection.setPermissions(signer, {mintMode: false});
+```
+
 
 ## enableCollectionNesting
 ```typescript

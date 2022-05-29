@@ -40,6 +40,36 @@ describe('Minting tests', () => {
     await expect(await collection.getLastTokenId()).toEqual(0);
   });
 
+  it('Test setProperties', async() => {
+    let info = await collection.getData();
+    await expect(info.raw.properties).toEqual([]);
+
+    let res = await collection.setProperties(alice, [{key: 'new', value: 'new property'}]);
+    await expect(res).toBe(true);
+    info = await collection.getData();
+    await expect(info.raw.properties).toEqual([{key: 'new', value: 'new property'}]);
+  });
+
+  it('Test deleteProperties', async() => {
+    let info = await collection.getData();
+    await expect(info.raw.properties).toEqual([{key: 'new', value: 'new property'}]);
+
+    let res = await collection.deleteProperties(alice, ['new']);
+    await expect(res).toBe(true);
+    info = await collection.getData();
+    await expect(info.raw.properties).toEqual([]);
+  });
+
+  it('Test setTokenPropertyPermissions', async() => {
+    let res = await collection.setTokenPropertyPermissions(alice, [{key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]);
+    await expect(res).toBe(true);
+    let info = await collection.getData();
+    await expect(info.raw.tokenPropertyPermissions).toEqual([
+      {key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
+      {key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}
+    ]);
+  });
+
   it('Test mintToken', async() => {
     let token = await collection.mintToken(alice, alice.address, [{key: 'name', value: 'Alice'}]);
     await expect(token.tokenId).toEqual(1);
@@ -138,7 +168,7 @@ describe('Minting tests', () => {
 
     const tokenId = (await collection.mintToken(alice, bob.address)).tokenId;
 
-    await expect(await collection.getTokenNextSponsored(tokenId, {Substrate: alice.address})).toBeNull;
+    await expect(await collection.getTokenNextSponsored(tokenId, {Substrate: alice.address})).toBeNull();
 
     await collection.setSponsor(alice, alice.address);
     await collection.confirmSponsorship(alice);

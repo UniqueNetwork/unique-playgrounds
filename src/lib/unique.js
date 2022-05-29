@@ -576,6 +576,42 @@ class UniqueHelper {
     return {success: burnedTokens.success, token: burnedTokens.tokens.length > 0 ? burnedTokens.tokens[0] : null};
   }
 
+  async setCollectionProperties(signer, collectionId, properties, label='set collection properties', transactionLabel='api.tx.unique.setCollectionProperties') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setCollectionProperties(collectionId, properties),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection properties for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertySet', label);
+  }
+
+  async deleteCollectionProperties(signer, collectionId, propertyKeys, label='delete collection properties', transactionLabel='api.tx.unique.deleteCollectionProperties') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.deleteCollectionProperties(collectionId, propertyKeys),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to delete collection properties for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertyDeleted', label);
+  }
+
+  async setTokenPropertyPermissions(signer, collectionId, permissions, label='set token property permissions', transactionLabel='api.tx.unique.setPropertyPermissions') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setPropertyPermissions(collectionId, permissions),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set token property permissions for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'PropertyPermissionSet', label);
+  }
+
   async setNFTTokenProperties(signer, collectionId, tokenId, properties, label='set properties', transactionLabel='api.tx.unique.setTokenProperties') {
     const result = await this.signTransaction(
       signer,
@@ -600,32 +636,28 @@ class UniqueHelper {
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertyDeleted', label);
   }
 
+  async setCollectionPermissions(signer, collectionId, permissions, label='set permissions', transactionLabel='api.tx.unique.setCollectionPermissions') {
+    const result = await this.signTransaction(
+      signer,
+      this.api.tx.unique.setCollectionPermissions(collectionId, permissions),
+      transactionLabel
+    );
+    if (result.status !== this.transactionStatus.SUCCESS) {
+      throw Error(`Unable to set collection permissions for ${label}`);
+    }
+    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
+  }
+
   async enableCollectionNesting(signer, collectionId, restrictedCollectionIds, label='enable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
     let nestingRule = 'Owner'
     if(typeof restrictedCollectionIds !== 'undefined') {
       nestingRule = {OwnerRestricted: restrictedCollectionIds}
     }
-    const result = await this.signTransaction(
-      signer,
-      this.api.tx.unique.setCollectionPermissions(collectionId, {nesting: nestingRule}),
-      transactionLabel
-    );
-    if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to enable nesting for ${label}`);
-    }
-    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
+    return await this.setCollectionPermissions(signer, collectionId, {nesting: nestingRule}, label, transactionLabel);
   }
 
   async disableCollectionNesting(signer, collectionId, label='disable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
-    const result = await this.signTransaction(
-      signer,
-      this.api.tx.unique.setCollectionPermissions(collectionId, {nesting: 'Disabled'}),
-      transactionLabel
-    );
-    if (result.status !== this.transactionStatus.SUCCESS) {
-      throw Error(`Unable to disable nesting for ${label}`);
-    }
-    return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
+    return await this.setCollectionPermissions(signer, collectionId, {nesting: 'Disabled'}, label, transactionLabel);
   }
 
   async nestCollectionToken(signer, tokenObj, rootTokenObj, label='nest token', transactionLabel='api.tx.unique.transfer') {
@@ -733,6 +765,14 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.burnNFTToken(signer, this.collectionId, tokenId, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
+  async setProperties(signer, properties, label) {
+    return await this.uniqueHelper.setCollectionProperties(signer, this.collectionId, properties, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async deleteProperties(signer, propertyKeys, label) {
+    return await this.uniqueHelper.deleteCollectionProperties(signer, this.collectionId, propertyKeys, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
   async setTokenProperties(signer, tokenId, properties, label) {
     return await this.uniqueHelper.setNFTTokenProperties(signer, this.collectionId, tokenId, properties, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
@@ -743,6 +783,14 @@ class UniqueNFTCollection {
 
   async getTokenNextSponsored(tokenId, addressObj) {
     return await this.uniqueHelper.getCollectionTokenNextSponsored(this.collectionId, tokenId, addressObj);
+  }
+
+  async setPermissions(signer, permissions, label) {
+    return await this.uniqueHelper.setCollectionPermissions(signer, this.collectionId, permissions, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  }
+
+  async setTokenPropertyPermissions(signer, permissions, label) {
+    return await this.uniqueHelper.setTokenPropertyPermissions(signer, this.collectionId, permissions, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
   async enableNesting(signer, restrictedCollectionIds, label) {
@@ -800,6 +848,10 @@ class UniqueNFTToken {
 
   async burn(signer, label) {
     return await this.collection.burnToken(signer, this.tokenId, label);
+  }
+
+  async getNextSponsored(addressObj) {
+    return await this.collection.getTokenNextSponsored(this.tokenId, addressObj);
   }
 }
 

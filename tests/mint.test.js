@@ -80,6 +80,30 @@ describe('Minting tests', () => {
     });
   });
 
+  it('Set collection properties', async() => {
+    let res, info;
+    res = await uniqueHelper.setCollectionProperties(alice, collectionId, [{key: 'first', value: 'First value'}]);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.properties).toEqual([{key: 'first', value: 'First value'}, {key: 'is_substrate', value: 'true'}]);
+
+    res = await uniqueHelper.setCollectionProperties(alice, collectionId, [{key: 'first', value: 'New value'}, {key: 'second', value: 'Second value'}]);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.properties).toEqual([{key: 'first', value: 'New value'}, {key: 'is_substrate', value: 'true'}, {key: 'second', value: 'Second value'}]);
+  });
+
+  it('Delete collection properties', async() => {
+    let res, info;
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.properties).toEqual([{key: 'first', value: 'New value'}, {key: 'is_substrate', value: 'true'}, {key: 'second', value: 'Second value'}]);
+
+    res = await uniqueHelper.deleteCollectionProperties(alice, collectionId, ['first', 'second']);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.properties).toEqual([{key: 'is_substrate', value: 'true'}]);
+  });
+
   it('Create collection with defaults', async () => {
     let collection = {name: 'def test', description: 'def test description', tokenPrefix: 'dtst'};
     let collectionIdWithDefaults = (await uniqueHelper.mintNFTCollectionWithDefaults(alice, collection)).collectionId;
@@ -385,4 +409,69 @@ describe('Minting tests', () => {
     await expect(info.properties).toEqual([]);
   });
 
+  it('Modify collection permissions', async() => {
+    let collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'with perms', description: 'collection with permissions', tokenPrefix: 'wp'})).collectionId;
+    let info = await uniqueHelper.getCollection(collectionId), res;
+    await expect(info.raw.permissions).toEqual({
+      access: 'Normal',
+      mintMode: false,
+      nesting: 'Disabled'
+    });
+
+    // TODO: rewrite after fix
+
+    // res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {mintMode: true});
+    // await expect(res).toBe(true);
+    // info = await uniqueHelper.getCollection(collectionId);
+    // await expect(info.raw.permissions).toEqual({
+    //   access: 'Normal',
+    //   mintMode: true,
+    //   nesting: 'Disabled'
+    // });
+
+    res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'AllowList'});
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.permissions).toEqual({
+      access: 'AllowList',
+      mintMode: false,
+      nesting: 'Disabled'
+    });
+
+    // res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'Normal', mintMode: false});
+    // await expect(res).toBe(true);
+    // info = await uniqueHelper.getCollection(collectionId);
+    // await expect(info.raw.permissions).toEqual({
+    //   access: 'Normal',
+    //   mintMode: false,
+    //   nesting: 'Disabled'
+    // });
+  });
+
+  it('Set tokenPropertyPermissions', async() => {
+    let collectionId = (await uniqueHelper.mintNFTCollection(alice, {
+      name: 'with tpp', description: 'collection with tokenPropertyPermissions', tokenPrefix: 'wtpp',
+      tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: false, tokenOwner: true}}]
+    })).collectionId, info, res;
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.tokenPropertyPermissions).toEqual([
+      {key: 'name', permission: {mutable: true, collectionAdmin: false, tokenOwner: true}}
+    ]);
+
+    res = await uniqueHelper.setTokenPropertyPermissions(alice, collectionId, [{key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.tokenPropertyPermissions).toEqual([
+      {key: 'name', permission: {mutable: true, collectionAdmin: false, tokenOwner: true}},
+      {key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}
+    ]);
+
+    res = await uniqueHelper.setTokenPropertyPermissions(alice, collectionId, [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]);
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.tokenPropertyPermissions).toEqual([
+      {key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
+      {key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}
+    ]);
+  });
 });

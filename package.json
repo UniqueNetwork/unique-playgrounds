@@ -1,7 +1,7 @@
 {
   "name": "unique-playgrounds",
   "description": "Helpers for Unique Network chain",
-  "version": "921010",
+  "version": "921080",
   "author": "Unique Network",
   "license": "Apache 2.0",
   "scripts": {
@@ -14,14 +14,13 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
-    "@polkadot/api": "8.5.2-10",
-    "@polkadot/util": "9.2.2-15",
-    "@polkadot/util-crypto": "9.2.2-15",
+    "@polkadot/api": "8.6.2",
+    "@polkadot/util": "9.3.1",
+    "@polkadot/util-crypto": "9.3.1",
     "@polkadot/wasm-crypto": "6.1.1",
-    "@polkadot/keyring": "9.2.2-15",
-    "@polkadot/networks": "9.2.2-15",
-    "@unique-nft/types": "0.6.0-2-nesting",
-    "protobufjs": "6.11.2",
+    "@polkadot/keyring": "9.3.1",
+    "@polkadot/networks": "9.3.1",
+    "@unique-nft/types": "0.6.0-4",
     "web3": "1.7.3"
   },
   "devDependencies": {

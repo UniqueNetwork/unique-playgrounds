@@ -247,10 +247,23 @@ describe('Minting tests', () => {
     await expect((await collection.getData()).normalizedOwner).toEqual(bob.address);
   });
 
-  it('Test burn', async() => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
-    let result = await collection.burn(bob);
+  it('Test burn (empty collection)', async() => {
+    const collectionToBurn = await uniqueHelper.mintNFTCollection(alice, collectionOptions)
+    let result = await collectionToBurn.burn(alice);
     await expect(result).toBe(true);
-    await expect(await collection.getData()).toBeNull();
+    await expect(await collectionToBurn.getData()).toBeNull();
+  });
+
+  it('Test burn (full collection)', async() => {
+    const bob = uniqueHelper.util.fromSeed('//Bob');
+    let result = false;
+    try {
+      result = await collection.burn(bob);
+    }
+    catch(e) {
+      await expect(e.status).toEqual('Fail');
+    }
+    await expect(result).toBe(false);
+    await expect(await collection.getData()).not.toBeNull();
   });
 });

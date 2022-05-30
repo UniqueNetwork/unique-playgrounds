@@ -30,19 +30,13 @@ describe('Minting tests', () => {
       tokenPrefix: 'tst',
       properties: [{key: 'is_substrate', value: 'true'}],
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}],
-      // TODO: investigate this
-      // limits: {
-      //   ownerCanTransfer: true
-      // }
+      limits: {
+        ownerCanTransfer: true
+      }
     }
     collectionId = (await uniqueHelper.mintNFTCollection(alice, collection)).collectionId;
     await expect(collectionId).not.toBeNull();
     const collectionInfo = await uniqueHelper.getCollection(collectionId);
-
-    // TODO: remove this
-    collection.limits = {
-      ownerCanTransfer: null
-    }
 
     await expect(collectionInfo).toEqual({
       "id": collectionId,
@@ -418,34 +412,32 @@ describe('Minting tests', () => {
       nesting: 'Disabled'
     });
 
-    // TODO: rewrite after fix
-
-    // res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {mintMode: true});
-    // await expect(res).toBe(true);
-    // info = await uniqueHelper.getCollection(collectionId);
-    // await expect(info.raw.permissions).toEqual({
-    //   access: 'Normal',
-    //   mintMode: true,
-    //   nesting: 'Disabled'
-    // });
+    res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {mintMode: true});
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.permissions).toEqual({
+      access: 'Normal',
+      mintMode: true,
+      nesting: 'Disabled'
+    });
 
     res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'AllowList'});
     await expect(res).toBe(true);
     info = await uniqueHelper.getCollection(collectionId);
     await expect(info.raw.permissions).toEqual({
       access: 'AllowList',
-      mintMode: false,
+      mintMode: true,
       nesting: 'Disabled'
     });
 
-    // res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'Normal', mintMode: false});
-    // await expect(res).toBe(true);
-    // info = await uniqueHelper.getCollection(collectionId);
-    // await expect(info.raw.permissions).toEqual({
-    //   access: 'Normal',
-    //   mintMode: false,
-    //   nesting: 'Disabled'
-    // });
+    res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'Normal', mintMode: false});
+    await expect(res).toBe(true);
+    info = await uniqueHelper.getCollection(collectionId);
+    await expect(info.raw.permissions).toEqual({
+      access: 'Normal',
+      mintMode: false,
+      nesting: 'Disabled'
+    });
   });
 
   it('Set tokenPropertyPermissions', async() => {

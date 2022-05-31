@@ -12,7 +12,7 @@ You should create a Substrate account to deploy your solution.
 You can use the [PolkadotJS extension](https://polkadot.js.org/extension/) to create a new account.
 
 To get some tokens to your account, please use [our Telegram bot](https://t.me/unique2faucet_rc_bot).
-The bot will ask you for the address of your account and will give 3000 OPL to your account.
+The bot will ask you for the address of your account and will give 3000 OPL to it.
 
 An example of a conversation with the bot:
 ```console

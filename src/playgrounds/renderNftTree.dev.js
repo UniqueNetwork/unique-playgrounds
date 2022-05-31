@@ -111,7 +111,7 @@ const renderNftTreeImpl = async (token, uniqueHelper) => {
 module.exports = {
   main,
   description: 'Playground to show how to display an NFT tree',
-  help: getUsage('npm run -- playground simpleNesting.dev', {
+  help: getUsage('npm run -- playground renderNftTree.dev', {
     help: 'Playground to show how to display an NFT tree'
   })
 }

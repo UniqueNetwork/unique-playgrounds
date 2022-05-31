@@ -117,7 +117,7 @@ const logTokenTopmostOwner = async (label, token) => {
 
 module.exports = {
   main,
-  description: 'Simple Nesting playground',
+  description: 'Playground to show simple NFT nesting scenario',
   help: getUsage('npm run -- playground simpleNesting.dev', {
     help: 'Playground to show simple NFT nesting scenario'
   })

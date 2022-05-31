@@ -23,6 +23,7 @@
     "@unique-nft/quartz-mainnet-types": "0.6.1",
     "@unique-nft/unique-mainnet-types": "0.6.3",
     "@unique-nft/opal-testnet-types": "0.5.3",
+    "archy": "^1.0.0",
     "web3": "1.7.3"
   },
   "devDependencies": {

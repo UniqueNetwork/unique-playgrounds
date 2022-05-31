@@ -97,7 +97,7 @@ const mintSampleToken = async (signer, owner, collectionId, uniqueHelper) => {
 
 module.exports = {
   main,
-  description: 'List account tokens playground',
+  description: 'Playground to show how to get a list of owned tokens for a specific address inside a given collection',
   help: getUsage('npm run -- playground simpleNesting.dev', {
     help: 'Playground to show how to get a list of owned tokens for a specific address inside a given collection'
   })

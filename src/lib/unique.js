@@ -1,35 +1,32 @@
 const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
-const { encodeAddress, decodeAddress } = require('@polkadot/util-crypto');
+const { encodeAddress, decodeAddress, keccakAsHex } = require('@polkadot/util-crypto');
 
 
 const nesting = {
-  web3: null,
-  loadWeb3() {
-    if(this.web3 !== null) return this.web3;
-    try {
-      this.web3 = require('web3');
+  toChecksumAddress(address) {
+    if (typeof address === 'undefined') return '';
+
+    if(!/^(0x)?[0-9a-f]{40}$/i.test(address))
+      throw new Error('Given address "'+ address +'" is not a valid Ethereum address.');
+
+    address = address.toLowerCase().replace(/^0x/i,'');
+    const addressHash = keccakAsHex(address).replace(/^0x/i,''); // only here changed
+    let checksumAddress = ['0x'];
+
+    for (let i = 0; i < address.length; i++ ) {
+      // If ith character is 8 to f then make it uppercase
+      if (parseInt(addressHash[i], 16) > 7) {
+        checksumAddress.push(address[i].toUpperCase());
+      } else {
+        checksumAddress.push(address[i]);
+      }
     }
-    catch (e) {
-      throw Error('You need web3 installed to use nesting');
-    }
-    return this.web3;
-  },
-  encodeIntBE(v) {
-    if (v >= 0xffffffff || v < 0) throw new Error('id overflow');
-    return [
-      v >> 24,
-      (v >> 16) & 0xff,
-      (v >> 8) & 0xff,
-      v & 0xff,
-    ];
+    return checksumAddress.join('');
   },
   tokenIdToAddress(collectionId, tokenId) {
-    const buf = Buffer.from([
-      0xf8, 0x23, 0x8c, 0xcf, 0xff, 0x8e, 0xd8, 0x87, 0x46, 0x3f, 0xd5, 0xe0,
-      ...this.encodeIntBE(collectionId),
-      ...this.encodeIntBE(tokenId),
-    ]);
-    return this.loadWeb3().utils.toChecksumAddress('0x' + buf.toString('hex'));
+    return this.toChecksumAddress(
+      `0xf8238ccfff8ed887463fd5e0${collectionId.toString(16).padStart(8, '0')}${tokenId.toString(16).padStart(8, '0')}`
+    );
   }
 }
 
@@ -308,7 +305,7 @@ class UniqueHelper {
         };
       }
     });
-    let isSuccess = this.util.normalizeSubstrateAddress(signer.address) === transfer.from;
+    let isSuccess = this.util.normalizeSubstrateAddress(typeof signer === 'string' ? signer : signer.address) === transfer.from;
     isSuccess = isSuccess && this.util.normalizeSubstrateAddress(address) === transfer.to;
     isSuccess = isSuccess && BigInt(amount) === transfer.amount;
     return isSuccess;
@@ -414,7 +411,7 @@ class UniqueHelper {
       this.api.tx.unique.transfer(addressObj, collectionId, tokenId, 1),
       transactionLabel
     );
-    return this.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: signer.address}, addressObj);
+    return this.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj);
   }
 
   async transferNFTTokenFrom(signer, collectionId, tokenId, fromAddressObj, toAddressObj, transactionLabel='api.tx.unique.transferFrom') {

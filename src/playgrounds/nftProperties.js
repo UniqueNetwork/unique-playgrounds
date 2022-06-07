@@ -150,7 +150,7 @@ const getTokenPropertiesStr = async (token) => {
 module.exports = {
   main,
   description: 'This playground shows how to work with NFT properties',
-  help: getUsage('npm run -- playground nftProperties.dev', {
+  help: getUsage('npm run -- playground nftProperties', {
       help: 'This playground shows how to work with NFT properties'
   })
 }

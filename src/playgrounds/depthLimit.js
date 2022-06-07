@@ -72,7 +72,7 @@ const mintSampleToken = async (signer, owner, collectionId, uniqueHelper) => {
 module.exports = {
   main,
   description: 'Playground to show how to reproduce the depth limit error',
-  help: getUsage('npm run -- playground depthLimit.dev', {
+  help: getUsage('npm run -- playground depthLimit', {
     help: 'Playground to show how to reproduce the depth limit error'
   })
 }

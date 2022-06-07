@@ -60,7 +60,7 @@ const main = async () => {
   // [WILL NOT WORK] only tokens from collection A and B can be used here
   // You'll get `common.SourceCollectionIsNotAllowedToNest` error.
   //
-  await uniqueHelper.nestCollectionToken(user, /* child */ tokensC[0], /* parent */ tokensA[0]);
+  // await uniqueHelper.nestCollectionToken(user, /* child */ tokensC[0], /* parent */ tokensA[0]);
 
   // You can change the nesting rules at any time
   // await uniqueHelper.setCollectionPermissions(
@@ -103,7 +103,7 @@ const mintSampleToken = async (signer, owner, collectionId, uniqueHelper) => {
 module.exports = {
   main,
   description: 'Playground to show restricted NFT nesting scenario',
-  help: getUsage('npm run -- playground restrictedNesting.dev', {
+  help: getUsage('npm run -- playground restrictedNesting', {
     help: 'Playground to show restricted NFT nesting scenario'
   })
 }

@@ -143,7 +143,7 @@ const logTokenTopmostOwner = async (label, token) => {
 module.exports = {
   main,
   description: 'Playground to show simple NFT nesting scenario (using tranfer/tranferFrom)',
-  help: getUsage('npm run -- playground explicitSimpleNesting.dev', {
+  help: getUsage('npm run -- playground explicitSimpleNesting', {
     help: 'Playground to show simple NFT nesting scenario (using tranfer/tranferFrom)'
   })
 }

@@ -93,7 +93,7 @@ const mintSampleToken = async (signer, owner, collectionId, uniqueHelper) => {
 module.exports = {
   main,
   description: 'Playground to show how to get a list of owned tokens for a specific address inside a given collection',
-  help: getUsage('npm run -- playground listAccountTokens.dev', {
+  help: getUsage('npm run -- playground listAccountTokens', {
     help: 'Playground to show how to get a list of owned tokens for a specific address inside a given collection'
   })
 }

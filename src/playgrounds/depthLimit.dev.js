@@ -26,6 +26,7 @@ const main = async () => {
   let owner = {Ethereum: rootTokenAddress};
 
   for (let i = 0; i < depthLimit; i++) {
+    // Mint nested token
     const token = await mintSampleToken(user, owner, collection.collectionId, uniqueHelper);
 
     const tokenAddress = uniqueHelper.util.getNestingTokenAddress(

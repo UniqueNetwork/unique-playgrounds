@@ -131,7 +131,7 @@ const renderNftTreeImpl = async (token, uniqueHelper) => {
 module.exports = {
   main,
   description: 'Playground to show how to restructure NFT trees',
-  help: getUsage('npm run -- playground restructDepthLimit.dev', {
+  help: getUsage('npm run -- playground restructTree', {
     help: 'Playground to show how to restructure NFT trees'
   })
 }

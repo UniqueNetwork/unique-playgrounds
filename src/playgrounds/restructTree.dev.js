@@ -6,7 +6,7 @@ var archy = require('archy');
 
 const wsEndPoint = "wss://ws-rc.unique.network";
 
-// This playground demonstrates how can you restructure an NFT tree
+// This playground demonstrates how can you restructure NFT trees
 const main = async () => {
   // 1) Init Unique helper, connect to the endpoint
   const uniqueHelper = new UniqueHelper(new Logger());
@@ -47,21 +47,20 @@ const main = async () => {
   let rendered = await renderNftTree(parentToken, uniqueHelper);
   console.log(rendered);
 
-  // 7) Renest child #1 into child #0
-  const firstChildTokenAddress = uniqueHelper.util.getNestingTokenAddress(
-    collection.collectionId,
-    children[0].tokenId
+  // 7) Let's imagine we need to renest grandchild #1 into child #0
+  await uniqueHelper.unnestCollectionToken(
+    user,
+    grandchildren[1],
+    children[1],
+    {Substrate: user.address}
+  );
+  await uniqueHelper.nestCollectionToken(
+    user,
+    grandchildren[1],
+    children[0]
   );
 
-  await uniqueHelper.transferNFTTokenFrom(
-      user,
-      collection.collectionId,
-      children[1].tokenId,
-      {Ethereum: parentTokenAddress},
-      {Ethereum: firstChildTokenAddress},
-  );
-
-  // 6) Render the tree again
+  // 8) Render the tree again
   rendered = await renderNftTree(parentToken, uniqueHelper);
   console.log(rendered);
 }
@@ -103,24 +102,27 @@ const renderNftTree = async (token, uniqueHelper) => {
 const renderNftTreeImpl = async (token, uniqueHelper) => {
   const collectionId = token.collectionId;
 
+  const tokenLabel = `<token: collection=${collectionId}, id=${token.tokenId}>`;
+
   const tokenAddress = uniqueHelper.util.getNestingTokenAddress(
     collectionId,
     token.tokenId
+    );
+
+  const ownedTokens = await uniqueHelper.getCollectionTokensByAddress(
+    collectionId, {Ethereum: tokenAddress}
   );
 
-  const children = (await uniqueHelper.getCollectionTokensByAddress(
-    collectionId, {Ethereum: tokenAddress}
-  )).map(childId => uniqueHelper.getCollectionTokenObject(collectionId, childId));
-
-  const tokenLabel = `<token: collection=${collectionId}, id=${token.tokenId}>`;
-
-  if (children.length === 0) {
+  if (ownedTokens.length === 0) {
     return tokenLabel;
   } else {
     return {
       label: tokenLabel,
       nodes: await Promise.all(
-        children.map(async (childToken) => await renderNftTreeImpl(childToken, uniqueHelper))
+        ownedTokens.map(async (childTokenId) => {
+          const childToken = uniqueHelper.getCollectionTokenObject(collectionId, childTokenId)
+          return await renderNftTreeImpl(childToken, uniqueHelper);
+        })
       )
     };
   }
@@ -128,8 +130,8 @@ const renderNftTreeImpl = async (token, uniqueHelper) => {
 
 module.exports = {
   main,
-  description: 'Playground to show how to restructure an NFT tree',
-  help: getUsage('npm run -- playground restructTree.dev', {
-    help: 'Playground to show how to restructure an NFT tree'
+  description: 'Playground to show how to restructure NFT trees',
+  help: getUsage('npm run -- playground restructDepthLimit.dev', {
+    help: 'Playground to show how to restructure NFT trees'
   })
 }

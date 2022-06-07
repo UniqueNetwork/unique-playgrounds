@@ -85,24 +85,27 @@ const renderNftTree = async (token, uniqueHelper) => {
 const renderNftTreeImpl = async (token, uniqueHelper) => {
   const collectionId = token.collectionId;
 
+  const tokenLabel = `<token: collection=${collectionId}, id=${token.tokenId}>`;
+
   const tokenAddress = uniqueHelper.util.getNestingTokenAddress(
     collectionId,
     token.tokenId
   );
 
-  const children = (await uniqueHelper.getCollectionTokensByAddress(
+  const ownedTokens = await uniqueHelper.getCollectionTokensByAddress(
     collectionId, {Ethereum: tokenAddress}
-  )).map(childId => uniqueHelper.getCollectionTokenObject(collectionId, childId));
+  );
 
-  const tokenLabel = `<token: collection=${collectionId}, id=${token.tokenId}>`;
-
-  if (children.length === 0) {
+  if (ownedTokens.length === 0) {
     return tokenLabel;
   } else {
     return {
       label: tokenLabel,
       nodes: await Promise.all(
-        children.map(async (childToken) => await renderNftTreeImpl(childToken, uniqueHelper))
+        ownedTokens.map(async (childTokenId) => {
+          const childToken = uniqueHelper.getCollectionTokenObject(collectionId, childTokenId)
+          return await renderNftTreeImpl(childToken, uniqueHelper);
+        })
       )
     };
   }

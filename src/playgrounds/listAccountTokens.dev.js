@@ -22,11 +22,6 @@ const main = async () => {
   const secondToken = await mintSampleToken(user, tokenOwner, collectionA.collectionId, uniqueHelper);
   const thirdToken = await mintSampleToken(user, tokenOwner, collectionB.collectionId, uniqueHelper);
 
-  // We'll show what address does our user have
-  console.log(`
-    User address: ${user.address}
-  `);
-
   // What tokens on the user?
   let tokensInA = await uniqueHelper.getCollectionTokensByAddress(collectionA.collectionId, tokenOwner);
   let tokensInB = await uniqueHelper.getCollectionTokensByAddress(collectionB.collectionId, tokenOwner);
@@ -68,7 +63,7 @@ const main = async () => {
 const createSampleCollection = async (signer, uniqueHelper) => {
   let collectionInfo = {
     name: 'nesting-example',
-    description: 'A collection to demonstrate simple token nesting',
+    description: 'A collection to demonstrate token nesting',
     tokenPrefix: 'SIMPLE',
 
     // We need to enable nesting. It is disabled by default.

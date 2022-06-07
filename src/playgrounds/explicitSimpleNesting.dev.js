@@ -72,7 +72,10 @@ const main = async () => {
     collection.collectionId,
     parentToken.tokenId
   );
-  console.log(`parentTokenAddress: ${parentTokenAddress}`);
+
+  console.log(`
+    parentTokenAddress: ${parentTokenAddress}
+  `);
 
   // 6) Nest child token into parent token (explicitly using transfer)
   await uniqueHelper.transferNFTToken(

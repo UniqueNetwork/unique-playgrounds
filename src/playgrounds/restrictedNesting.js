@@ -79,7 +79,7 @@ const createSampleCollection = async (signer, uniqueHelper) => {
   let collectionInfo = {
     name: 'nesting-example',
     description: 'A collection to demonstrate simple token nesting',
-    tokenPrefix: 'SIMPLE',
+    tokenPrefix: 'SMPL',
   };
 
   const collection = await uniqueHelper.mintNFTCollection(signer, collectionInfo);

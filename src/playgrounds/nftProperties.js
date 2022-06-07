@@ -18,7 +18,7 @@ const main = async () => {
   let collectionInfo = {
     name: 'nft-properties-example',
     description: 'A collection to demonstrate NFT properties',
-    tokenPrefix: 'SIMPLE',
+    tokenPrefix: 'SMPL',
 
     // List what properties the collection tokens can have
     // and what restrictions are hold on them

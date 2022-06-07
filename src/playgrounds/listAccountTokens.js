@@ -2,7 +2,8 @@ const { getUsage } = require('../lib/cli');
 const { UniqueHelper } = require('../lib/unique');
 const { Logger } = require('../lib/logger');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground demonstrates how can you list owned NFTs
 const main = async () => {
@@ -31,33 +32,33 @@ const main = async () => {
     User tokens in collection B: ${tokensInB}
   `);
 
-  // What if we nest thirdToken into firstToken?
-  // What will return `getCollectionTokensByAddress` for our user?
-  await uniqueHelper.nestCollectionToken(user, thirdToken, firstToken);
+  // // What if we nest thirdToken into firstToken?
+  // // What will return `getCollectionTokensByAddress` for our user?
+  // await uniqueHelper.nestCollectionToken(user, thirdToken, firstToken);
 
-  tokensInA = await uniqueHelper.getCollectionTokensByAddress(collectionA.collectionId, tokenOwner);
+  // tokensInA = await uniqueHelper.getCollectionTokensByAddress(collectionA.collectionId, tokenOwner);
 
-  // It will be empty because the user doesn't own any token in collection B directly
-  tokensInB = await uniqueHelper.getCollectionTokensByAddress(collectionB.collectionId, tokenOwner);
+  // // It will be empty because the user doesn't own any token in collection B directly
+  // tokensInB = await uniqueHelper.getCollectionTokensByAddress(collectionB.collectionId, tokenOwner);
 
-  console.log(`
-    User tokens in collection A: ${tokensInA}
-    User tokens in collection B: ${tokensInB}
-  `);
+  // console.log(`
+  //   User tokens in collection A: ${tokensInA}
+  //   User tokens in collection B: ${tokensInB}
+  // `);
 
-  // Let's fetch owned tokens for the firstToken (in the collection B)
-  const firstTokenAddress = uniqueHelper.util.getNestingTokenAddress(
-    firstToken.collectionId,
-    firstToken.tokenId
-  );
-  tokensInB = await uniqueHelper.getCollectionTokensByAddress(
-    collectionB.collectionId,
-    {Ethereum: firstTokenAddress}
-  );
+  // // Let's fetch owned tokens for the firstToken (in the collection B)
+  // const firstTokenAddress = uniqueHelper.util.getNestingTokenAddress(
+  //   firstToken.collectionId,
+  //   firstToken.tokenId
+  // );
+  // tokensInB = await uniqueHelper.getCollectionTokensByAddress(
+  //   collectionB.collectionId,
+  //   {Ethereum: firstTokenAddress}
+  // );
 
-  console.log(`
-    firstToken tokens in collection B: ${tokensInB}
-  `);
+  // console.log(`
+  //   firstToken tokens in collection B: ${tokensInB}
+  // `);
 }
 
 const createSampleCollection = async (signer, uniqueHelper) => {

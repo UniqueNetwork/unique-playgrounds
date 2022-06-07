@@ -2,7 +2,8 @@ const { getUsage } = require('../lib/cli');
 const { UniqueHelper } = require('../lib/unique');
 const { Logger } = require('../lib/logger');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground demonstrates how can you reproduce the depth limit error
 const main = async () => {

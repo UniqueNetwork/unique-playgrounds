@@ -4,7 +4,8 @@ const { Logger } = require('../lib/logger');
 
 var archy = require('archy');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground demonstrates how can you restructure NFT trees
 const main = async () => {
@@ -47,22 +48,22 @@ const main = async () => {
   let rendered = await renderNftTree(parentToken, uniqueHelper);
   console.log(rendered);
 
-  // 7) Let's imagine we need to renest grandchild #1 into child #0
-  await uniqueHelper.unnestCollectionToken(
-    user,
-    grandchildren[1],
-    children[1],
-    {Substrate: user.address}
-  );
-  await uniqueHelper.nestCollectionToken(
-    user,
-    grandchildren[1],
-    children[0]
-  );
+  // // 7) Let's imagine we need to renest grandchild #1 into child #0
+  // await uniqueHelper.unnestCollectionToken(
+  //   user,
+  //   grandchildren[1],
+  //   children[1],
+  //   {Substrate: user.address}
+  // );
+  // await uniqueHelper.nestCollectionToken(
+  //   user,
+  //   grandchildren[1],
+  //   children[0]
+  // );
 
-  // 8) Render the tree again
-  rendered = await renderNftTree(parentToken, uniqueHelper);
-  console.log(rendered);
+  // // 8) Render the tree again
+  // rendered = await renderNftTree(parentToken, uniqueHelper);
+  // console.log(rendered);
 }
 
 const createSampleCollection = async (signer, uniqueHelper) => {

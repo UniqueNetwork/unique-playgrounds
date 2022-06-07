@@ -2,7 +2,8 @@ const { getUsage } = require('../lib/cli');
 const { UniqueHelper } = require('../lib/unique');
 const { Logger } = require('../lib/logger');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground demonstrates how can you nest one NFT into another
 // using the `UniqueHelper` class to get rid of much boilerplate as possible
@@ -66,29 +67,29 @@ const main = async () => {
   await logTokenOwner('parent', parentToken);
   await logTokenOwner('child', childToken);
 
-  // 5) Nest child token into parent token
-  await uniqueHelper.nestCollectionToken(user, childToken, parentToken);
+  // // 5) Nest child token into parent token
+  // await uniqueHelper.nestCollectionToken(user, childToken, parentToken);
 
-  // Now `parentToken` owns the `childToken`
-  // We should see the following:
-  //
-  // User
-  //   |-- parentToken
-  //   |      |-- childToken
-  await logTokenOwner('parent', parentToken);
-  await logTokenOwner('child', childToken);
-  await logTokenTopmostOwner('child', childToken);
+  // // Now `parentToken` owns the `childToken`
+  // // We should see the following:
+  // //
+  // // User
+  // //   |-- parentToken
+  // //   |      |-- childToken
+  // await logTokenOwner('parent', parentToken);
+  // await logTokenOwner('child', childToken);
+  // await logTokenTopmostOwner('child', childToken);
 
-  // 6) Unnest the `childToken`
-  await uniqueHelper.unnestCollectionToken(user, childToken, parentToken, {Substrate: user.address});
+  // // 6) Unnest the `childToken`
+  // await uniqueHelper.unnestCollectionToken(user, childToken, parentToken, {Substrate: user.address});
 
-  // We returned to the initial state
-  //
-  // User
-  //   |-- parentToken
-  //   |-- childToken
-  await logTokenOwner('parent', parentToken);
-  await logTokenOwner('child', childToken);
+  // // We returned to the initial state
+  // //
+  // // User
+  // //   |-- parentToken
+  // //   |-- childToken
+  // await logTokenOwner('parent', parentToken);
+  // await logTokenOwner('child', childToken);
 }
 
 const logTokenOwner = async (label, token) => {

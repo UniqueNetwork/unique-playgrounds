@@ -2,7 +2,8 @@ const { getUsage } = require('../lib/cli');
 const { UniqueHelper } = require('../lib/unique');
 const { Logger } = require('../lib/logger');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground demonstrates how can you nest one NFT into another
 // using the `UniqueHelper` class to get rid of much boilerplate as possible.
@@ -67,53 +68,53 @@ const main = async () => {
   await logTokenOwner('parent', parentToken);
   await logTokenOwner('child', childToken);
 
-  // 5) Obtain the target token address
-  const parentTokenAddress = uniqueHelper.util.getNestingTokenAddress(
-    collection.collectionId,
-    parentToken.tokenId
-  );
+//   // 5) Obtain the target token address
+//   const parentTokenAddress = uniqueHelper.util.getNestingTokenAddress(
+//     collection.collectionId,
+//     parentToken.tokenId
+//   );
 
-  console.log(`
-    parentTokenAddress: ${parentTokenAddress}
-  `);
+//   console.log(`
+//     parentTokenAddress: ${parentTokenAddress}
+//   `);
 
-  // 6) Nest child token into parent token (explicitly using transfer)
-  await uniqueHelper.transferNFTToken(
-    user,
-    collection.collectionId,
-    childToken.tokenId,
-    {Ethereum: parentTokenAddress}
- );
+//   // 6) Nest child token into parent token (explicitly using transfer)
+//   await uniqueHelper.transferNFTToken(
+//     user,
+//     collection.collectionId,
+//     childToken.tokenId,
+//     {Ethereum: parentTokenAddress}
+//  );
 
-  // Now `parentToken` owns the `childToken`
-  // We should see the following:
-  //
-  // User
-  //   |-- parentToken
-  //   |      |-- childToken
-  await logTokenOwner('parent', parentToken);
-  await logTokenOwner('child', childToken);
-  await logTokenTopmostOwner('child', childToken);
+//   // Now `parentToken` owns the `childToken`
+//   // We should see the following:
+//   //
+//   // User
+//   //   |-- parentToken
+//   //   |      |-- childToken
+//   await logTokenOwner('parent', parentToken);
+//   await logTokenOwner('child', childToken);
+//   await logTokenTopmostOwner('child', childToken);
 
-  // 7) Unnest the `childToken`
-  // We just issuing the transfer transaction once again.
-  // But we should use transferFrom since
-  // we'll transfer the child token on behalf of the parent token.
-  await uniqueHelper.transferNFTTokenFrom(
-    user,
-    collection.collectionId,
-    childToken.tokenId,
-    {Ethereum: parentTokenAddress},
-    {Substrate: user.address}
-  );
+//   // 7) Unnest the `childToken`
+//   // We just issuing the transfer transaction once again.
+//   // But we should use transferFrom since
+//   // we'll transfer the child token on behalf of the parent token.
+//   await uniqueHelper.transferNFTTokenFrom(
+//     user,
+//     collection.collectionId,
+//     childToken.tokenId,
+//     {Ethereum: parentTokenAddress},
+//     {Substrate: user.address}
+//   );
 
-  // We returned to the initial state
-  //
-  // User
-  //   |-- parentToken
-  //   |-- childToken
-  await logTokenOwner('parent', parentToken);
-  await logTokenOwner('child', childToken);
+//   // We returned to the initial state
+//   //
+//   // User
+//   //   |-- parentToken
+//   //   |-- childToken
+//   await logTokenOwner('parent', parentToken);
+//   await logTokenOwner('child', childToken);
 }
 
 const logTokenOwner = async (label, token) => {

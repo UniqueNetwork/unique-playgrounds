@@ -4,7 +4,8 @@ const { Logger } = require('../lib/logger');
 
 var archy = require('archy');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground demonstrates how can you send an entire bundle to another user
 const main = async () => {
@@ -53,29 +54,29 @@ const main = async () => {
   // Let's check one of the tree leafs
   await logTokenTopmostOwner('grandchild', grandchildren[0]);
 
-  // 7) Transfer the tree (NFT bundle) to another user (Bob)
-  const bobAddress = uniqueHelper.util.fromSeed('//Bob').address;
+  // // 7) Transfer the tree (NFT bundle) to another user (Bob)
+  // const bobAddress = uniqueHelper.util.fromSeed('//Bob').address;
 
-  await uniqueHelper.transferNFTToken(
-    user,
-    collection.collectionId,
-    parentToken.tokenId,
-    {Substrate: bobAddress}
-  );
+  // await uniqueHelper.transferNFTToken(
+  //   user,
+  //   collection.collectionId,
+  //   parentToken.tokenId,
+  //   {Substrate: bobAddress}
+  // );
 
-  console.log(`
-    Bob address: ${bobAddress}
-  `);
+  // console.log(`
+  //   Bob address: ${bobAddress}
+  // `);
 
-  // 8) Render the tree, check if we have the exact same tree
-  rendered = await renderNftTree(parentToken, uniqueHelper);
-  console.log(rendered);
+  // // 8) Render the tree, check if we have the exact same tree
+  // rendered = await renderNftTree(parentToken, uniqueHelper);
+  // console.log(rendered);
 
-  // Let's check who owns the parentToken
-  await logTokenTopmostOwner('parent', parentToken);
+  // // Let's check who owns the parentToken
+  // await logTokenTopmostOwner('parent', parentToken);
 
-  // Let's check one of the tree leafs
-  await logTokenTopmostOwner('grandchild', grandchildren[0]);
+  // // Let's check one of the tree leafs
+  // await logTokenTopmostOwner('grandchild', grandchildren[0]);
 }
 
 const createSampleCollection = async (signer, uniqueHelper) => {

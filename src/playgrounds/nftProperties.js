@@ -2,7 +2,8 @@ const { getUsage } = require('../lib/cli');
 const { UniqueHelper } = require('../lib/unique');
 const { Logger } = require('../lib/logger');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground shows how to work with NFT properties
 const main = async () => {
@@ -68,51 +69,51 @@ const main = async () => {
     token properties: ${await getTokenPropertiesStr(token)}
   `);
 
-  // 5) Add new property
-  await uniqueHelper.setNFTTokenProperties(
-    tokenOwner,
-    collection.collectionId,
-    token.tokenId,
-    [
-      {
-        key: 'mutable-key',
-        value: 'MK Initial Value'
-      },
-    ]
-  );
+  // // 5) Add new property
+  // await uniqueHelper.setNFTTokenProperties(
+  //   tokenOwner,
+  //   collection.collectionId,
+  //   token.tokenId,
+  //   [
+  //     {
+  //       key: 'mutable-key',
+  //       value: 'MK Initial Value'
+  //     },
+  //   ]
+  // );
 
-  console.log(`
-    updated token properties: ${await getTokenPropertiesStr(token)}
-  `);
+  // console.log(`
+  //   updated token properties: ${await getTokenPropertiesStr(token)}
+  // `);
 
-  // 5) Change the property
-  await uniqueHelper.setNFTTokenProperties(
-    tokenOwner,
-    collection.collectionId,
-    token.tokenId,
-    [
-      {
-        key: 'mutable-key',
-        value: 'MK New Value'
-      },
-    ]
-  );
+  // // 5) Change the property
+  // await uniqueHelper.setNFTTokenProperties(
+  //   tokenOwner,
+  //   collection.collectionId,
+  //   token.tokenId,
+  //   [
+  //     {
+  //       key: 'mutable-key',
+  //       value: 'MK New Value'
+  //     },
+  //   ]
+  // );
 
-  console.log(`
-    updated token properties: ${await getTokenPropertiesStr(token)}
-  `);
+  // console.log(`
+  //   updated token properties: ${await getTokenPropertiesStr(token)}
+  // `);
 
-  // 6) Delete the property
-  await uniqueHelper.deleteNFTTokenProperties(
-    tokenOwner,
-    collection.collectionId,
-    token.tokenId,
-    ['mutable-key']
-  );
+  // // 6) Delete the property
+  // await uniqueHelper.deleteNFTTokenProperties(
+  //   tokenOwner,
+  //   collection.collectionId,
+  //   token.tokenId,
+  //   ['mutable-key']
+  // );
 
-  console.log(`
-    updated token properties: ${await getTokenPropertiesStr(token)}
-  `);
+  // console.log(`
+  //   updated token properties: ${await getTokenPropertiesStr(token)}
+  // `);
 
   // // [WILL NOT WORK] No one can modify the immutable property
   // // You will get `common.NoPermission` error.

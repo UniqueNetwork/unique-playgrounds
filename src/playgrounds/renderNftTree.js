@@ -4,7 +4,8 @@ const { Logger } = require('../lib/logger');
 
 var archy = require('archy');
 
-const wsEndPoint = "wss://ws-rc.unique.network";
+// const wsEndPoint = "wss://ws-rc.unique.network";
+const wsEndPoint = "ws://localhost:9944";
 
 // This playground demonstrates how can you render an NFT tree
 const main = async () => {

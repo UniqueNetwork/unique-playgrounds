@@ -82,7 +82,7 @@ const createSampleCollection = async (signer, uniqueHelper) => {
   let collectionInfo = {
     name: 'nesting-example',
     description: 'A collection to demonstrate simple token nesting',
-    tokenPrefix: 'SIMPLE',
+    tokenPrefix: 'SMPL',
 
     // We need to enable nesting. It is disabled by default.
     permissions: {

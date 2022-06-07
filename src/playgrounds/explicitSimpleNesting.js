@@ -19,7 +19,7 @@ const main = async () => {
   let collectionInfo = {
     name: 'nesting-example',
     description: 'A collection to demonstrate simple token nesting',
-    tokenPrefix: 'EXPLSIMPLE',
+    tokenPrefix: 'SMPL',
 
     // We need to enable the nesting. It is disabled by default.
     permissions: {

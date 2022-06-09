@@ -241,8 +241,21 @@ class UniqueHelper {
             resolve({result, status});
             unsub();
           } else if (status === this.transactionStatus.FAIL) {
+            let moduleError = null;
+
+            if (result.hasOwnProperty('dispatchError')) {
+              const dispatchError = result['dispatchError'];
+
+              if (dispatchError.isModule) {
+                const modErr = dispatchError.asModule;
+                const errorMeta = dispatchError.registry.findMetaError(modErr);
+
+                moduleError = `${errorMeta.section}.${errorMeta.name}`;
+              }
+            }
+
             this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
-            reject({result, status});
+            reject({status, moduleError, result});
             unsub();
           }
         });

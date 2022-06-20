@@ -15,6 +15,7 @@ describe('Minting tests', () => {
     const config = getConfig();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
+    if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
@@ -48,13 +49,19 @@ describe('Minting tests', () => {
       "raw": {
         "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
+        "readOnly": false,
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
         "description": uniqueHelper.util.str2vec(collection.description).map(x => x.toString()),
         "tokenPrefix": collection.tokenPrefix,
         "permissions": {
           "access": "Normal",
           "mintMode": false,
-          "nesting": "Disabled"
+          "nesting": {
+            "collectionAdmin": false,
+            "permissive": false,
+            "restricted": null,
+            "tokenOwner": false
+          }
         },
         "sponsorship": "Disabled",
         "limits": {
@@ -114,13 +121,19 @@ describe('Minting tests', () => {
       "raw": {
         "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
+        "readOnly": false,
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
         "description": uniqueHelper.util.str2vec(collection.description).map(x => x.toString()),
         "tokenPrefix": collection.tokenPrefix,
         "permissions": {
           "access": "Normal",
           "mintMode": false,
-          "nesting": "Disabled"
+          "nesting": {
+            "collectionAdmin": false,
+            "permissive": false,
+            "restricted": null,
+            "tokenOwner": false
+          }
         },
         "sponsorship": "Disabled",
         "limits": {
@@ -409,7 +422,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'Normal',
       mintMode: false,
-      nesting: 'Disabled'
+      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
     });
 
     res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {mintMode: true});
@@ -418,7 +431,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'Normal',
       mintMode: true,
-      nesting: 'Disabled'
+      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
     });
 
     res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'AllowList'});
@@ -427,7 +440,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'AllowList',
       mintMode: true,
-      nesting: 'Disabled'
+      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
     });
 
     res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'Normal', mintMode: false});
@@ -436,7 +449,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'Normal',
       mintMode: false,
-      nesting: 'Disabled'
+      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
     });
   });
 

@@ -11,19 +11,23 @@ class UniqueHelperWeb extends UniqueHelper {
   }
 
   signTransaction(sender, transaction, label = 'transaction') {
+    const sign = callback => {
+      if(typeof sender === 'string') return transaction.signAndSend(sender, {signer: this.injector.signer}, callback);
+      return transaction.signAndSend(sender, callback);
+    }
     return new Promise(async (resolve, reject) => {
       try {
-        let unsub = await transaction.signAndSend(sender, {signer: this.injector.signer}, result => {
+        let unsub = await sign(result => {
           const status = this.getTransactionStatus(result);
 
           if (status === this.transactionStatus.SUCCESS) {
             this.logger.log(`${label} successful`);
-            resolve({result, status});
             unsub();
+            resolve({result, status});
           } else if (status === this.transactionStatus.FAIL) {
             this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
-            reject({result, status});
             unsub();
+            reject({result, status});
           }
         });
       } catch (e) {

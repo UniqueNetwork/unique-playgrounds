@@ -12,6 +12,7 @@ describe('Nesting tests', () => {
     const config = getConfig();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
+    if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
@@ -34,33 +35,33 @@ describe('Nesting tests', () => {
 
     // Nesting disabled by default
     let collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual('Disabled');
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null, permissive: false});
 
     // Manually enable nesting
-    let result = await uniqueHelper.enableCollectionNesting(alice, collectionId);
+    let result = await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true});
     await expect(result).toBe(true);
 
     collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual('Owner');
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: null, permissive: false});
 
     // Allow nesting only for this collection tokens
-    result = await uniqueHelper.enableCollectionNesting(alice, collectionId, [collectionId]);
+    result = await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true, restricted: [collectionId]});
     await expect(result).toBe(true);
 
     collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({OwnerRestricted: [collectionId.toString()]});
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: [collectionId], permissive: false});
 
     // Disable nesting back
     result = await uniqueHelper.disableCollectionNesting(alice, collectionId);
     await expect(result).toBe(true);
 
     collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual('Disabled');
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null, permissive: false});
   });
 
   it('Test nest and unnest tokens', async () => {
     const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to nest', description: 'collection with nesting', tokenPrefix: 'tn'})).collectionId;
-    await uniqueHelper.enableCollectionNesting(alice, collectionId);
+    await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true});
 
     const [firstToken, secondToken, thirdToken] = (await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
       {owner: {substrate: alice.address}}, {owner: {Substrate: alice.address}}, {owner: {Substrate: alice.address}}
@@ -72,6 +73,7 @@ describe('Nesting tests', () => {
     let result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: thirdToken}, {collectionId, tokenId: firstToken});
     await expect(result).toBe(true);
     await expect((await uniqueHelper.getToken(collectionId, thirdToken)).normalizedOwner).toEqual(rootAddress);
+    await expect(await uniqueHelper.getTokenChildren(collectionId, firstToken)).toEqual([{collection: collectionId, token: thirdToken}]);
 
     // The topmost owner of the token #3 is still Alice
     await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: alice.address});
@@ -81,6 +83,7 @@ describe('Nesting tests', () => {
     result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken});
     await expect(result).toBe(true);
     await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
+    await expect(await uniqueHelper.getTokenChildren(collectionId, thirdToken)).toEqual([{collection: collectionId, token: secondToken}]);
 
     // The topmost owner of the token #2 is still Alice
     await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: alice.address});
@@ -101,5 +104,6 @@ describe('Nesting tests', () => {
     result = await uniqueHelper.unnestCollectionToken(bob, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken}, {Substrate: bob.address});
     await expect(result).toBe(true);
     await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual({substrate: bob.address});
+    await expect(await uniqueHelper.getTokenChildren(collectionId, thirdToken)).toEqual([])
   });
 });

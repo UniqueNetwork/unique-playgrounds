@@ -2,7 +2,7 @@
 
 You can build your own web-compatible `unique.js` using webpack.
 
-Just run `npm i && npm build` inside this directory, your file will be generated to `dist/unique-web.js`.
+Just run `npm i && npm run build` inside this directory, your file will be generated to `dist/unique-web.js`.
 
 You can modify `webpack.config.js` for your own purposes.
 

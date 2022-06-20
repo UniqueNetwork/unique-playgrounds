@@ -1,7 +1,7 @@
 {
   "name": "unique-playgrounds-web",
   "description": "Web Helpers for Unique Network chain",
-  "version": "921080",
+  "version": "922080",
   "author": "Unique Network",
   "license": "Apache 2.0",
   "scripts": {
@@ -19,7 +19,9 @@
     "@polkadot/wasm-crypto": "6.1.1",
     "@polkadot/keyring": "9.3.1",
     "@polkadot/networks": "9.3.1",
-    "@unique-nft/types": "0.6.0-4",
+    "@unique-nft/quartz-mainnet-types": "0.5.2",
+    "@unique-nft/unique-mainnet-types": "0.6.1",
+    "@unique-nft/opal-testnet-types": "0.5.2",
     "webpack": "5.73.0",
     "webpack-cli": "4.9.2"
   }

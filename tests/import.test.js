@@ -52,6 +52,7 @@ describe('Import helper tests', () => {
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     const logger = new loggerCls();
     uniqueHelper = new UniqueHelper(logger);
+    if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
     importer = new UniqueImporter(alice, uniqueHelper, tmpDir.path, logger);

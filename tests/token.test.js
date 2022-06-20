@@ -16,6 +16,7 @@ describe('Minting tests', () => {
     const config = getConfig();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
+    if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
 
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
@@ -82,7 +83,7 @@ describe('Minting tests', () => {
   });
 
   it('Test nest', async() => {
-    await collection.enableNesting(alice);
+    await collection.enableNesting(alice, {tokenOwner: true});
 
     let res = await secondToken.nest(alice, firstToken);
     await expect(res).toBe(true);
@@ -90,6 +91,19 @@ describe('Minting tests', () => {
     let info = await secondToken.getData();
     await expect(info.normalizedOwner).toEqual({ethereum: uniqueHelper.util.getNestingTokenAddress(firstToken.collectionId, firstToken.tokenId).toLocaleLowerCase()});
   });
+
+  it('Test getTopmostOwner', async () => {
+    let info = await secondToken.getData();
+    await expect(info.normalizedOwner).toEqual({ethereum: uniqueHelper.util.getNestingTokenAddress(firstToken.collectionId, firstToken.tokenId).toLocaleLowerCase()});
+
+    let res = await secondToken.getTopmostOwner();
+    await expect(res).toEqual({Substrate: alice.address});
+  });
+
+  it('Test getChildren', async () => {
+    let res = await firstToken.getChildren();
+    await expect(res).toEqual([{collection: secondToken.collectionId, token: secondToken.tokenId}]);
+  })
 
   it('Test unnest', async() => {
     let res = await secondToken.unnest(alice, firstToken, {Substrate: bob.address});

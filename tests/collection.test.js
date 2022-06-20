@@ -18,6 +18,7 @@ describe('Minting tests', () => {
     const config = getConfig();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
+    if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
     collection = await uniqueHelper.mintNFTCollection(alice, collectionOptions);
@@ -152,7 +153,7 @@ describe('Minting tests', () => {
       "tokenLimit": 4_294_967_295,
       "sponsorTransferTimeout": 0,
       "sponsorApproveTimeout": 0,
-      "ownerCanTransfer": true,
+      "ownerCanTransfer": false,
       "ownerCanDestroy": true,
       "transfersEnabled": true
     });

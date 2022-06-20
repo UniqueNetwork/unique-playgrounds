@@ -124,6 +124,9 @@
           <div v-if="selectedAccount !== 'None'">
             <div>Address: {{ selectedAccount }}</div>
             <div>Balance: <span v-if="balance === null">Loading balance...</span><span v-else>{{ balance }}</span></div>
+            <div v-if="balance">
+              <button @click="transferFromBob">Transfer 1 token from Bob</button>
+            </div>
             <div v-if="balance && balance > 1_000_000_000_000_000">
               <button @click="transferToAlice">Transfer 0.01 token to Alice</button>
             </div>
@@ -175,10 +178,20 @@
             this.balance = await helper.getSubstrateAccountBalance(this.selectedAccount);
           },
           async transferToAlice() {
+            await this.transactional(async () => {
+              await helper.transferBalanceToSubstrateAccount(this.selectedAccount, '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY', 10_000_000_000_000_000n);
+            });
+          },
+          async transferFromBob() {
+            await this.transactional(async () => {
+              await helper.transferBalanceToSubstrateAccount(helper.util.fromSeed('//Bob'), this.selectedAccount, 10n * await helper.getOneTokenNominal());
+            });
+          },
+          async transactional(callback) {
             if(this.inTransaction) return;
             if(!this.validAccount) return;
             this.inTransaction = true;
-            await helper.transferBalanceToSubstrateAccount(this.selectedAccount, '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY', 10_000_000_000_000_000n);
+            await callback.call(this);
             this.inTransaction = false;
             await this.loadBalance();
           },

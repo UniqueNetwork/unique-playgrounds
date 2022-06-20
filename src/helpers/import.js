@@ -232,6 +232,10 @@ class UniqueImporter {
   }
 
   async import(exportedCollection, exportedTokensList) {
+    if(exportedCollection.raw.mode !== 'NFT') {
+      this.logger.log('You can import only NFT collections', this.logger.level.ERROR);
+      return;
+    }
     await this.createCollection(exportedCollection);
     await this.createTokens(exportedCollection, exportedTokensList);
     await this.changeOwnership(exportedCollection);

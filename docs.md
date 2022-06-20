@@ -451,7 +451,7 @@ async mintNFTCollection(
     permissions: {
       access?: "AllowList" | "Normal",
       mintMode?: boolean,
-      nesting?: "Disabled" | "Owner" | {OwnerRestricted: Number[]}
+      nesting: {collectionAdmin: boolean, permissive: false, restricted: null | Number[], tokenOwner: bool}
     },
     limits?: ChainLimits,
     properties?: ({key: string, value: string})[],
@@ -882,7 +882,7 @@ let result = await token.deleteProperties(signer, ['name']);
 async setCollectionPermissions(signer: IKeyringPair, collectionId: Number, permissions: {
     access?: 'Normal' | 'AllowList',
     mintMode?: boolean,
-    nesting?: 'Disabled' | 'Owner' | {OwnerRestricted: Number[]}
+    nesting?: {tokenOwner: boolean, collectionAdmin: boolean, restricted: null | Number[]}
 }): Promise<boolean>
 ```
 
@@ -904,7 +904,7 @@ let result = await collection.setPermissions(signer, {mintMode: false});
 
 ## enableCollectionNesting
 ```typescript
-async enableCollectionNesting(signer: IKeyringPair, collectionId: Number, restrictedCollectionIds?: Number[]): Promise<boolean>
+async enableCollectionNesting(signer: IKeyringPair, collectionId: Number, permissions: {tokenOwner: boolean, collectionAdmin: boolean, restricted: null | Number[]}): Promise<boolean>
 ```
 
 Enables nesting for selected collection. If `restrictedCollectionIds` set, you can nest only tokens from specified collections. Returns bool true on success.
@@ -912,14 +912,14 @@ Enables nesting for selected collection. If `restrictedCollectionIds` set, you c
 Example:
 ```javascript
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = await uniqueHelper.enableCollectionNesting(signer, 1);
+let result = await uniqueHelper.enableCollectionNesting(signer, 1, {tokenOwner: true, collectionAdmin: false});
 ```
 
 Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
 let signer = uniqueHelper.util.fromSeed('//Alice');
-let result = await collection.enableNesting();
+let result = await collection.enableNesting({tokenOwner: true, collectionAdmin: false});
 ```
 
 
@@ -998,6 +998,8 @@ let token = uniqueHelper.getCollectionTokenObject(1, 2);
 let signer = uniqueHelper.util.fromSeed('//Alice');
 let result = await token.unnest(signer, {collectionId: 1, tokenId: 1}, {Substrate: '5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'});
 ```
+
+
 ## getTokenTopmostOwner
 ```javascript
 async getTokenTopmostOwner(collectionId: Number, tokenId: Number, blockHashAt?: string): Promise<{Substrate?: string, Ethereum?: string} | null>
@@ -1022,6 +1024,31 @@ Alternative way via the UniqueNFTToken:
 let token = uniqueHelper.getCollectionTokenObject(1, 2);
 let tokenTopmostOwner = await token.getTopmostOwner();
 ```
+
+
+## getTokenChildren
+```javascript
+async getTokenChildren(collectionId: Number, tokenId: Number, blockHashAt?: string): Promise<({collection: Number, token: Number})[]>
+```
+
+Get children (tokens, nested to given token) of given token.
+
+```javascript
+let tokenChildren = await uniqueHelper.getTokenChildren(1, 1);
+```
+
+Alternative way via the UniqueNFTCollection:
+```javascript
+let collection = uniqueHelper.getCollectionObject(1);
+let tokenTopmostOwner = await collection.getTokenChildren(1);
+```
+
+Alternative way via the UniqueNFTToken:
+```javascript
+let token = uniqueHelper.getCollectionTokenObject(1, 1);
+let tokenTopmostOwner = await token.getChildren();
+```
+
 
 ## util.fromSeed
 ```typescript

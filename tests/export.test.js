@@ -23,6 +23,7 @@ describe('Export helper tests', () => {
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     logger = new loggerCls();
     uniqueHelper = new UniqueHelper(logger);
+    if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
     exporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
@@ -99,6 +100,7 @@ describe('Export helper tests', () => {
       "raw": {
         "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
         "mode": "NFT",
+        "readOnly": false,
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
         "description": uniqueHelper.util.str2vec(collection.description).map(x => x.toString()),
         "tokenPrefix": collection.tokenPrefix,
@@ -106,7 +108,12 @@ describe('Export helper tests', () => {
         "permissions": {
           "access": "Normal",
           "mintMode": false,
-          "nesting": "Disabled"
+          "nesting": {
+            "collectionAdmin": false,
+            "permissive": false,
+            "restricted": null,
+            "tokenOwner": false
+          }
         },
         "limits": {
           "accountTokenOwnershipLimit": null,

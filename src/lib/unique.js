@@ -6,8 +6,7 @@ const nesting = {
   toChecksumAddress(address) {
     if (typeof address === 'undefined') return '';
 
-    if(!/^(0x)?[0-9a-f]{40}$/i.test(address))
-      throw new Error('Given address "'+ address +'" is not a valid Ethereum address.');
+    if(!/^(0x)?[0-9a-f]{40}$/i.test(address)) throw new Error(`Given address "${address}" is not a valid Ethereum address.`);
 
     address = address.toLowerCase().replace(/^0x/i,'');
     const addressHash = keccakAsHex(address).replace(/^0x/i,''); // only here changed
@@ -29,6 +28,7 @@ const nesting = {
     );
   }
 }
+
 
 class UniqueUtil {
   static transactionStatus = {
@@ -171,7 +171,7 @@ class UniqueUtil {
 }
 
 
-class UniqueHelper {
+class ChainHelperBase {
   transactionStatus = UniqueUtil.transactionStatus;
 
   constructor(logger) {
@@ -179,11 +179,16 @@ class UniqueHelper {
     if (typeof logger == 'undefined') logger = this.util.getDefaultLogger();
     this.logger = logger;
     this.api = null;
+    this.forcedNetwork = null;
+  }
+
+  forceNetwork(value) {
+    this.forcedNetwork = value;
   }
 
   async connect(wsEndpoint, listeners) {
     if (this.api !== null) throw Error('Already connected');
-    this.api = await this.constructor.createConnection(wsEndpoint, listeners);
+    this.api = await this.constructor.createConnection(wsEndpoint, listeners, this.forcedNetwork);
   }
 
   async disconnect() {
@@ -192,20 +197,47 @@ class UniqueHelper {
     this.api = null;
   }
 
-  static async createConnection(wsEndpoint, listeners) {
-    const api = new ApiPromise({
-      provider: new WsProvider(wsEndpoint),
-      rpc: {
-        unique: require('@unique-nft/types/definitions').unique.rpc
+  static detectNetwork(api) {
+    let tokens = api.registry.getChainProperties().tokenSymbol.toJSON();
+    if(tokens.indexOf('OPL') > -1) return 'opal';
+    if(tokens.indexOf('QTZ') > -1) return 'quartz';
+    if(tokens.indexOf('UNQ') > -1) return 'unique';
+    return 'opal';
+  }
+
+  static async createConnection(wsEndpoint, listeners, network) {
+    let api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
+
+    await api.isReady;
+
+    const supportedRPC = {
+      opal: {
+        unique: require('@unique-nft/opal-testnet-types/definitions').unique.rpc
+      },
+      quartz: {
+        unique: require('@unique-nft/quartz-mainnet-types/definitions').unique.rpc
+      },
+      unique: {
+        unique: require('@unique-nft/unique-mainnet-types/definitions').unique.rpc
       }
-    });
+    }
+    if(!supportedRPC.hasOwnProperty(network)) network = this.detectNetwork(api);
+    const rpc = supportedRPC[network];
+
+    // TODO: investigate how to replace rpc in runtime
+    // api._rpcCore.addUserInterfaces(rpc);
+    await api.disconnect();
+
+    api = new ApiPromise({provider: new WsProvider(wsEndpoint), rpc});
+
+    await api.isReady;
+
     if (typeof listeners === 'undefined') listeners = {};
     for (let event of ['connected', 'disconnected', 'error', 'ready', 'decorated']) {
       if (!listeners.hasOwnProperty(event)) continue;
       api.on(event, listeners[event]);
     }
 
-    await api.isReady;
 
     return api;
   }
@@ -238,8 +270,8 @@ class UniqueHelper {
 
           if (status === this.transactionStatus.SUCCESS) {
             this.logger.log(`${label} successful`);
-            resolve({result, status});
             unsub();
+            resolve({result, status});
           } else if (status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
@@ -255,8 +287,8 @@ class UniqueHelper {
             }
 
             this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
-            reject({status, moduleError, result});
             unsub();
+            reject({status, moduleError, result});
           }
         });
       } catch (e) {
@@ -265,7 +297,10 @@ class UniqueHelper {
       }
     });
   }
+}
 
+
+class UniqueHelper extends ChainHelperBase {
   async getCollectionTokenNextSponsored(collectionId, tokenId, addressObj) {
     return (await this.api.rpc.unique.nextSponsored(collectionId, addressObj, tokenId)).toJSON();
   }
@@ -333,9 +368,10 @@ class UniqueHelper {
     let humanCollection = collection.toHuman(), collectionData = {
       id: collectionId, name: null, description: null, tokensCount: 0, admins: [],
       raw: humanCollection
-    };
+    }, jsonCollection = collection.toJSON();
     if (humanCollection === null) return null;
-    collectionData.raw.limits = collection.toJSON().limits;
+    collectionData.raw.limits = jsonCollection.limits;
+    collectionData.raw.permissions = jsonCollection.permissions;
     collectionData.normalizedOwner = this.util.normalizeSubstrateAddress(collectionData.raw.owner);
     for (let key of ['name', 'description']) {
       collectionData[key] = this.util.vec2str(humanCollection[key]);
@@ -416,6 +452,17 @@ class UniqueHelper {
     owner = owner.toHuman();
 
     return owner.Substrate ? {Substrate: this.util.normalizeSubstrateAddress(owner.Substrate)} : owner;
+  }
+
+  async getTokenChildren(collectionId, tokenId, blockHashAt) {
+    let children;
+    if(typeof blockHashAt === 'undefined') {
+      children = await this.api.rpc.unique.tokenChildren(collectionId, tokenId);
+    } else {
+      children = await this.api.rpc.unique.tokenChildren(collectionId, tokenId, blockHashAt);
+    }
+
+    return children.toJSON();
   }
 
   async transferNFTToken(signer, collectionId, tokenId, addressObj, transactionLabel='api.tx.unique.transfer') {
@@ -628,7 +675,7 @@ class UniqueHelper {
   async setTokenPropertyPermissions(signer, collectionId, permissions, label='set token property permissions', transactionLabel='api.tx.unique.setPropertyPermissions') {
     const result = await this.signTransaction(
       signer,
-      this.api.tx.unique.setPropertyPermissions(collectionId, permissions),
+      this.api.tx.unique.setTokenPropertyPermissions(collectionId, permissions),
       transactionLabel
     );
     if (result.status !== this.transactionStatus.SUCCESS) {
@@ -673,16 +720,12 @@ class UniqueHelper {
     return this.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
   }
 
-  async enableCollectionNesting(signer, collectionId, restrictedCollectionIds, label='enable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
-    let nestingRule = 'Owner'
-    if(typeof restrictedCollectionIds !== 'undefined') {
-      nestingRule = {OwnerRestricted: restrictedCollectionIds}
-    }
-    return await this.setCollectionPermissions(signer, collectionId, {nesting: nestingRule}, label, transactionLabel);
+  async enableCollectionNesting(signer, collectionId, permissions, label='enable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
+    return await this.setCollectionPermissions(signer, collectionId, {nesting: permissions}, label, transactionLabel);
   }
 
   async disableCollectionNesting(signer, collectionId, label='disable nesting', transactionLabel='api.tx.unique.setCollectionPermissions') {
-    return await this.setCollectionPermissions(signer, collectionId, {nesting: 'Disabled'}, label, transactionLabel);
+    return await this.setCollectionPermissions(signer, collectionId, {nesting: {tokenOwner: false, collectionAdmin: false}}, label, transactionLabel);
   }
 
   async nestCollectionToken(signer, tokenObj, rootTokenObj, label='nest token', transactionLabel='api.tx.unique.transfer') {
@@ -703,6 +746,7 @@ class UniqueHelper {
     return result;
   }
 }
+
 
 class UniqueNFTCollection {
   constructor(collectionId, uniqueHelper) {
@@ -744,6 +788,10 @@ class UniqueNFTCollection {
 
   async getTokenTopmostOwner(tokenId, blockHashAt) {
     return await this.uniqueHelper.getTokenTopmostOwner(this.collectionId, tokenId, blockHashAt);
+  }
+
+  async getTokenChildren(tokenId, blockHashAt) {
+    return await this.uniqueHelper.getTokenChildren(this.collectionId, tokenId, blockHashAt);
   }
 
   async transferToken(signer, tokenId, addressObj) {
@@ -822,8 +870,8 @@ class UniqueNFTCollection {
     return await this.uniqueHelper.setTokenPropertyPermissions(signer, this.collectionId, permissions, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
-  async enableNesting(signer, restrictedCollectionIds, label) {
-    return await this.uniqueHelper.enableCollectionNesting(signer, this.collectionId, restrictedCollectionIds, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
+  async enableNesting(signer, permissions, label) {
+    return await this.uniqueHelper.enableCollectionNesting(signer, this.collectionId, permissions, typeof label === 'undefined' ? `collection #${this.collectionId}` : label);
   }
 
   async disableNesting(signer, label) {
@@ -853,6 +901,10 @@ class UniqueNFTToken {
 
   async getTopmostOwner(blockHashAt) {
     return await this.collection.getTokenTopmostOwner(this.tokenId, blockHashAt);
+  }
+
+  async getChildren(blockHashAt) {
+    return await this.collection.getTokenChildren(this.tokenId, blockHashAt);
   }
 
   async nest(signer, toTokenObj, label) {

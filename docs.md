@@ -451,7 +451,7 @@ async mintNFTCollection(
     permissions: {
       access?: "AllowList" | "Normal",
       mintMode?: boolean,
-      nesting: {collectionAdmin: boolean, permissive: false, restricted: null | Number[], tokenOwner: bool}
+      nesting: {collectionAdmin: boolean, tokenOwner: boolean, restricted: null | Number[]}
     },
     limits?: ChainLimits,
     properties?: ({key: string, value: string})[],
@@ -1040,13 +1040,13 @@ let tokenChildren = await uniqueHelper.getTokenChildren(1, 1);
 Alternative way via the UniqueNFTCollection:
 ```javascript
 let collection = uniqueHelper.getCollectionObject(1);
-let tokenTopmostOwner = await collection.getTokenChildren(1);
+let tokenChildren = await collection.getTokenChildren(1);
 ```
 
 Alternative way via the UniqueNFTToken:
 ```javascript
 let token = uniqueHelper.getCollectionTokenObject(1, 1);
-let tokenTopmostOwner = await token.getChildren();
+let tokenChildren = await token.getChildren();
 ```
 
 

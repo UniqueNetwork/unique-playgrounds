@@ -35,28 +35,28 @@ describe('Nesting tests', () => {
 
     // Nesting disabled by default
     let collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null, permissive: false});
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null});
 
     // Manually enable nesting
     let result = await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true});
     await expect(result).toBe(true);
 
     collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: null, permissive: false});
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: null});
 
     // Allow nesting only for this collection tokens
     result = await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true, restricted: [collectionId]});
     await expect(result).toBe(true);
 
     collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: [collectionId], permissive: false});
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: [collectionId]});
 
     // Disable nesting back
     result = await uniqueHelper.disableCollectionNesting(alice, collectionId);
     await expect(result).toBe(true);
 
     collection = await uniqueHelper.getCollection(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null, permissive: false});
+    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null});
   });
 
   it('Test nest and unnest tokens', async () => {

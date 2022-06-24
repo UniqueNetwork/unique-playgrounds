@@ -58,7 +58,6 @@ describe('Minting tests', () => {
           "mintMode": false,
           "nesting": {
             "collectionAdmin": false,
-            "permissive": false,
             "restricted": null,
             "tokenOwner": false
           }
@@ -130,7 +129,6 @@ describe('Minting tests', () => {
           "mintMode": false,
           "nesting": {
             "collectionAdmin": false,
-            "permissive": false,
             "restricted": null,
             "tokenOwner": false
           }
@@ -422,7 +420,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'Normal',
       mintMode: false,
-      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
+      nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
     });
 
     res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {mintMode: true});
@@ -431,7 +429,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'Normal',
       mintMode: true,
-      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
+      nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
     });
 
     res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'AllowList'});
@@ -440,7 +438,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'AllowList',
       mintMode: true,
-      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
+      nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
     });
 
     res = await uniqueHelper.setCollectionPermissions(alice, collectionId, {access: 'Normal', mintMode: false});
@@ -449,7 +447,7 @@ describe('Minting tests', () => {
     await expect(info.raw.permissions).toEqual({
       access: 'Normal',
       mintMode: false,
-      nesting: {collectionAdmin: false, tokenOwner: false, permissive: false, restricted: null}
+      nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
     });
   });
 

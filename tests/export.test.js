@@ -110,7 +110,6 @@ describe('Export helper tests', () => {
           "mintMode": false,
           "nesting": {
             "collectionAdmin": false,
-            "permissive": false,
             "restricted": null,
             "tokenOwner": false
           }

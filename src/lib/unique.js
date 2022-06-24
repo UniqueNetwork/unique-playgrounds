@@ -180,6 +180,7 @@ class ChainHelperBase {
     this.logger = logger;
     this.api = null;
     this.forcedNetwork = null;
+    this.network = null;
   }
 
   forceNetwork(value) {
@@ -188,28 +189,36 @@ class ChainHelperBase {
 
   async connect(wsEndpoint, listeners) {
     if (this.api !== null) throw Error('Already connected');
-    this.api = await this.constructor.createConnection(wsEndpoint, listeners, this.forcedNetwork);
+    const { api, network } = await this.constructor.createConnection(wsEndpoint, listeners, this.forcedNetwork);
+    this.api = api;
+    this.network = network;
   }
 
   async disconnect() {
     if (this.api === null) return;
     await this.api.disconnect();
     this.api = null;
+    this.network = null;
   }
 
-  static detectNetwork(api) {
-    let tokens = api.registry.getChainProperties().tokenSymbol.toJSON();
-    if(tokens.indexOf('OPL') > -1) return 'opal';
-    if(tokens.indexOf('QTZ') > -1) return 'quartz';
-    if(tokens.indexOf('UNQ') > -1) return 'unique';
+  static async detectNetwork(api) {
+    let spec = (await api.query.system.lastRuntimeUpgrade()).toJSON();
+    if(['quartz', 'unique'].indexOf(spec.specName) > -1) return spec.specName;
     return 'opal';
   }
 
-  static async createConnection(wsEndpoint, listeners, network) {
+  static async detectNetworkByWsEndpoint(wsEndpoint) {
     let api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
-
     await api.isReady;
 
+    const network = await this.detectNetwork(api);
+
+    await api.disconnect();
+
+    return network;
+  }
+
+  static async createConnection(wsEndpoint, listeners, network) {
     const supportedRPC = {
       opal: {
         unique: require('@unique-nft/opal-testnet-types/definitions').unique.rpc
@@ -221,14 +230,13 @@ class ChainHelperBase {
         unique: require('@unique-nft/unique-mainnet-types/definitions').unique.rpc
       }
     }
-    if(!supportedRPC.hasOwnProperty(network)) network = this.detectNetwork(api);
+    if(!supportedRPC.hasOwnProperty(network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
     const rpc = supportedRPC[network];
 
     // TODO: investigate how to replace rpc in runtime
     // api._rpcCore.addUserInterfaces(rpc);
-    await api.disconnect();
 
-    api = new ApiPromise({provider: new WsProvider(wsEndpoint), rpc});
+    const api = new ApiPromise({provider: new WsProvider(wsEndpoint), rpc});
 
     await api.isReady;
 
@@ -239,7 +247,7 @@ class ChainHelperBase {
     }
 
 
-    return api;
+    return {api, network};
   }
 
   getTransactionStatus({events, status}) {

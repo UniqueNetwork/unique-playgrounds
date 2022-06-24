@@ -23,6 +23,13 @@ describe('Chain state tests', () => {
     await uniqueHelper.disconnect();
   });
 
+  it('Test chain spec detection', async() => {
+    const quartzNetwork = await UniqueHelper.detectNetworkByWsEndpoint('wss://ws-quartz.unique.network');
+    await expect(quartzNetwork).toEqual('quartz');
+    const uniqueNetwork = await UniqueHelper.detectNetworkByWsEndpoint('wss://us-ws.unique.network');
+    await expect(uniqueNetwork).toEqual('unique')
+  });
+
   it('Test chain properties', async () => {
     const properties = await uniqueHelper.getChainProperties();
     await expect(typeof properties.ss58Format).toEqual('string');

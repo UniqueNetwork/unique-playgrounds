@@ -3,6 +3,7 @@ const path = require('path');
 module.exports = {
   entry: path.resolve(__dirname, 'unique-web.js'),
   target: 'web',
+  mode: 'production',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'unique-web.js',
@@ -14,7 +15,6 @@ module.exports = {
     }
   },
   optimization: {
-    minimize: false
-  },
-  devtool: 'inline-source-map'
+    minimize: true
+  }
 };

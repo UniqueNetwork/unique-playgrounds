@@ -32,12 +32,13 @@ describe('Chain state tests', () => {
 
   it('Test chain properties', async () => {
     const properties = await uniqueHelper.getChainProperties();
-    await expect(typeof properties.ss58Format).toEqual('string');
-    await expect(`${parseInt(properties.ss58Format)}`).toEqual(properties.ss58Format);
+    await expect(typeof properties.ss58Format).toEqual('number');
     for(let key of ['tokenDecimals', 'tokenSymbol']) {
       await expect(Array.isArray(properties[key])).toBe(true);
       await expect(properties[key].length >= 1).toBe(true);
     }
+    await expect(typeof properties.tokenDecimals[0]).toEqual('number');
+    await expect(typeof properties.tokenSymbol[0]).toEqual('string');
 
     const oneToken = await uniqueHelper.getOneTokenNominal();
     await expect(oneToken).toEqual(10n ** BigInt(properties.tokenDecimals[0]));

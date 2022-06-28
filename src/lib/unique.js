@@ -1,5 +1,5 @@
 const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
-const { encodeAddress, decodeAddress, keccakAsHex } = require('@polkadot/util-crypto');
+const { encodeAddress, decodeAddress, keccakAsHex, evmToAddress } = require('@polkadot/util-crypto');
 
 
 const nesting = {
@@ -314,7 +314,12 @@ class UniqueHelper extends ChainHelperBase {
   }
 
   async getChainProperties() {
-    return (await this.api.registry.getChainProperties()).toHuman();
+    const properties = (await this.api.registry.getChainProperties()).toJSON();
+    return {
+      ss58Format: properties.ss58Format.toJSON(),
+      tokenDecimals: properties.tokenDecimals.toJSON(),
+      tokenSymbol: properties.tokenSymbol.toJSON()
+    };
   }
 
   async getLatestBlockNumber() {
@@ -329,12 +334,18 @@ class UniqueHelper extends ChainHelperBase {
 
   async getOneTokenNominal() {
     const chainProperties = await this.getChainProperties();
-    return 10n ** BigInt((chainProperties.tokenDecimals || ['18'])[0]);
+    return 10n ** BigInt((chainProperties.tokenDecimals || [18])[0]);
   }
 
   async normalizeSubstrateAddressToChainFormat(address) {
     let info = await this.getChainProperties();
-    return encodeAddress(decodeAddress(address), parseInt(info.ss58Format));
+    return encodeAddress(decodeAddress(address), info.ss58Format);
+  }
+
+  async ethAddressToSubstrate(ethAddress, toChainFormat) {
+    if(!toChainFormat) return evmToAddress(ethAddress);
+    let info = await this.getChainProperties();
+    return evmToAddress(ethAddress, info.ss58Format);
   }
 
   async getSubstrateAccountBalance(address) {

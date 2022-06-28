@@ -59,8 +59,8 @@ A method for disconnecting from the chain's WebSocket interface.
 
 ```typescript
 async getChainProperties(): Promise<{
-  ss58Format: string,
-  tokenDecimals: string[] | null,
+  ss58Format: Number,
+  tokenDecimals: Number[] | null,
   tokenSymbol: string[] | null
 }>
 ```
@@ -69,7 +69,7 @@ The method returns the ss58 address format for the chain, the number of decimals
 
 Example (for Quartz):
 ```javascript
-await uniqueHelper.getChainProperties(); // {ss58Format: "255", "tokenDecimals": ["18"], "tokenSymbol": ["QTZ"]}
+await uniqueHelper.getChainProperties(); // {ss58Format: 255, tokenDecimals: [18], tokenSymbol: ['QTZ']}
 ```
 
 

@@ -145,20 +145,25 @@ class UniqueUtil {
 
   static isTokenTransferSuccess(events, collectionId, tokenId, fromAddressObj, toAddressObj) {
     const normalizeAddress = address => {
-      if(address.Substrate) return {Substrate: this.normalizeSubstrateAddress(address.Substrate)};
-      if(address.Ethereum) return {Ethereum: address.Ethereum.toLocaleLowerCase()};
+      if(typeof address === 'string') return address;
+      let obj = {}
+      Object.keys(address).forEach(k => {
+        obj[k.toLocaleLowerCase()] = address[k];
+      });
+      if(obj.substrate) return {Substrate: this.normalizeSubstrateAddress(obj.substrate)};
+      if(obj.ethereum) return {Ethereum: obj.ethereum.toLocaleLowerCase()};
       return address;
     }
     let transfer = {collectionId: null, tokenId: null, from: null, to: null, amount: 1};
     events.forEach(({event: {data, method, section}}) => {
       if ((section === 'common') && (method === 'Transfer')) {
-        let hData = data.toHuman();
+        let hData = data.toJSON();
         transfer = {
-          collectionId: parseInt(hData[0]),
-          tokenId: parseInt(hData[1]),
+          collectionId: hData[0],
+          tokenId: hData[1],
           from: normalizeAddress(hData[2]),
           to: normalizeAddress(hData[3]),
-          amount: parseInt(hData[4])
+          amount: hData[4]
         };
       }
     });

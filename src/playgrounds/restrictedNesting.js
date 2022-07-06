@@ -45,7 +45,8 @@ const main = async () => {
     collectionA.collectionId,
     {
         nesting: {
-            OwnerRestricted: [
+            tokenOwner: true,
+            restricted: [
                 collectionA.collectionId,
                 collectionB.collectionId
             ]
@@ -66,7 +67,7 @@ const main = async () => {
   // await uniqueHelper.setCollectionPermissions(
   //   user,
   //   collectionA.collectionId,
-  //   { nesting: "Owner" }
+  //   { nesting: "tokenOwner" }
   // );
 
   // Now it works

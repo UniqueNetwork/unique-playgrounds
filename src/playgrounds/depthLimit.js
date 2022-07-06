@@ -47,7 +47,9 @@ const createSampleCollection = async (signer, uniqueHelper) => {
 
     // We need to enable nesting. It is disabled by default.
     permissions: {
-      nesting: "Owner"
+      nesting: {
+        tokenOwner: true
+      }
     }
   };
 

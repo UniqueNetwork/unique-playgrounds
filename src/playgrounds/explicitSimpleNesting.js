@@ -23,7 +23,9 @@ const main = async () => {
 
     // We need to enable the nesting. It is disabled by default.
     permissions: {
-      nesting: "Owner"
+      nesting: {
+        tokenOwner: true,
+      }
     }
   };
 

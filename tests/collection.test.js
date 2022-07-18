@@ -262,7 +262,7 @@ describe('Minting tests', () => {
       result = await collection.burn(bob);
     }
     catch(e) {
-      await expect(e.status).toEqual('Fail');
+      await expect(e.toString()).toEqual(`Error: Unable to burn collection for collection #${collection.collectionId}`);
     }
     await expect(result).toBe(false);
     await expect(await collection.getData()).not.toBeNull();

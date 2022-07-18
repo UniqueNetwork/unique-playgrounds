@@ -346,7 +346,7 @@ describe('Minting tests', () => {
       result = await uniqueHelper.setNFTTokenProperties(bob, collectionId, tokenId, [{key: 'admin', value: 'I cant change this'}]);
     }
     catch (e) {
-      await expect(e.status).toEqual('Fail');
+      await expect(e.toString()).toEqual(`Error: Unable to set token properties for token #${tokenId} from collection #${collectionId}`);
     }
     await expect(result).toBe(false);
     await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([{key: 'admin', value: 'From Alice with love'}]);
@@ -365,7 +365,7 @@ describe('Minting tests', () => {
       result = await uniqueHelper.setNFTTokenProperties(alice, collectionId, tokenId, [{key: 'user', value: 'I cant change this'}]);
     }
     catch (e) {
-      await expect(e.status).toEqual('Fail');
+      await expect(e.toString()).toEqual(`Error: Unable to set token properties for token #${tokenId} from collection #${collectionId}`);
     }
     await expect(result).toBe(false);
     await expect((await uniqueHelper.getToken(collectionId, tokenId)).properties).toEqual([

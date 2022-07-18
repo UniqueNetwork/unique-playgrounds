@@ -13,6 +13,16 @@ class TMPDir {
   }
 }
 
+const clearChainLog = chainLog => {
+  return chainLog.map(x => {
+    let newLog = {};
+    Object.keys(x).forEach(k => {
+      if(['type', 'call', 'params', 'status'].indexOf(k) > -1) newLog[k] = x[k];
+    });
+    return newLog;
+  });
+}
+
 module.exports = {
-  TMPDir
+  TMPDir, clearChainLog
 }

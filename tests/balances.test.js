@@ -1,8 +1,9 @@
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { getConfig } = require('./config');
+const { clearChainLog } = require('./misc/util');
 
-describe('Balances tests', () => {
+describe('Balances tests',  () => {
   jest.setTimeout(60 * 60 * 1000);
 
   let uniqueHelper;
@@ -36,5 +37,13 @@ describe('Balances tests', () => {
 
     await expect(bobBalance.after).toEqual(bobBalance.before + oneToken);
     await expect(aliceBalance.before - aliceBalance.after).toBeGreaterThanOrEqual(oneToken);
+
+    await expect(clearChainLog(uniqueHelper.chainLog)).toEqual([
+      {type: 'rpc', status: 'Success', call: 'api.query.system.account', params: ['5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY']},
+      {type: 'rpc', status: 'Success', call: 'api.query.system.account', params: ['5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty']},
+      {type: 'extrinsic', status: 'Success', call: 'api.tx.balances.transfer', params: ['5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty', oneToken]},
+      {type: 'rpc', status: 'Success', call: 'api.query.system.account', params: ['5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty']},
+      {type: 'rpc', status: 'Success', call: 'api.query.system.account', params: ['5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY']}
+    ])
   });
 });

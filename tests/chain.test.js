@@ -56,7 +56,7 @@ describe('Chain state tests', () => {
   });
 
   it('Test getCollectionTokenNextSponsored', async () => {
-    expect(await uniqueHelper.getCollectionTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
+    await expect(await uniqueHelper.getCollectionTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
 
     const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
     const tokenId = (await uniqueHelper.mintNFTToken(alice, {collectionId, owner: bob.address})).tokenId;
@@ -71,5 +71,9 @@ describe('Chain state tests', () => {
 
     await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, tokenId, {Substrate: alice.address})).toBeLessThanOrEqual(5);
     await uniqueHelper.transferNFTToken(alice, collectionId, tokenId, {Substrate: bob.address});
+  });
+
+  it('Test ethAddressToSubstrate', async () => {
+    await expect(await uniqueHelper.ethAddressToSubstrate('0x5c03d3976Ad16F50451d95113728E0229C50cAB8')).toEqual('5Gppc4U5bFnhXCo3GUshZfooP85nMKrAfKvqpprFf8rhviop')
   });
 });

@@ -22,6 +22,10 @@ await uniqueHelper.connect('wss://quartz.unique.network');
 
 More usage examples can be found in the `tests` folder, please refer to the `tests/mint.test.js` and `tests/collection.test.js` files.
 
+## get polkadot logs
+
+You can get logs of `@polkadot/api` calls for transactions using `uniqueHelper.chainLog` array. RPC calls also logged.
+
 
 ## connect
 

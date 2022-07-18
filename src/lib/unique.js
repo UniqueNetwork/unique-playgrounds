@@ -333,6 +333,7 @@ class ChainHelperBase {
 
   async executeExtrinsic(sender, extrinsic, params, expectSuccess=false, failureMessage='expected success') {
     if(this.api === null) throw Error('API not initialized');
+    if(!extrinsic.startsWith('api.tx.')) throw Error(`${extrinsic} is not transaction`);
 
     const startTime = (new Date()).getTime();
     let result;

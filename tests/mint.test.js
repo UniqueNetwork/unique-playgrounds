@@ -1,6 +1,5 @@
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
-const { subToEth } = require('../src/helpers/marketplace');
 const { getConfig } = require('./config');
 
 
@@ -243,11 +242,11 @@ describe('Minting tests', () => {
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
     })).collectionId;
     await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address, properties: [{key: 'name', value: 'Alice'}]});
-    let transferResult = await uniqueHelper.transferNFTToken(alice, collectionId, 1, {Ethereum: subToEth(alice.address)});
+    let transferResult = await uniqueHelper.transferNFTToken(alice, collectionId, 1, {Ethereum: uniqueHelper.substrateAddressToEth(alice.address)});
     await expect(transferResult).toBe(true);
     let currentOwner = (await uniqueHelper.getToken(collectionId, 1)).normalizedOwner;
-    await expect(currentOwner).toEqual({ethereum: subToEth(alice.address).toLocaleLowerCase()});
-    let transferFromResult = await uniqueHelper.transferNFTTokenFrom(alice, collectionId, 1, {Ethereum: subToEth(alice.address)}, {Substrate: alice.address});
+    await expect(currentOwner).toEqual({ethereum: uniqueHelper.substrateAddressToEth(alice.address).toLocaleLowerCase()});
+    let transferFromResult = await uniqueHelper.transferNFTTokenFrom(alice, collectionId, 1, {Ethereum: uniqueHelper.substrateAddressToEth(alice.address)}, {Substrate: alice.address});
     await expect(transferFromResult).toBe(true);
     currentOwner = (await uniqueHelper.getToken(collectionId, 1)).normalizedOwner;
     await expect(currentOwner).toEqual({substrate: alice.address});

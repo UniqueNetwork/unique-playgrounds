@@ -76,4 +76,8 @@ describe('Chain state tests', () => {
   it('Test ethAddressToSubstrate', async () => {
     await expect(await uniqueHelper.ethAddressToSubstrate('0x5c03d3976Ad16F50451d95113728E0229C50cAB8')).toEqual('5Gppc4U5bFnhXCo3GUshZfooP85nMKrAfKvqpprFf8rhviop')
   });
+
+  it('Test substrateAddressToEth', async () => {
+    await expect(await uniqueHelper.substrateAddressToEth('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY')).toEqual('0xd43593c715Fdd31c61141ABd04a99FD6822c8558');
+  });
 });

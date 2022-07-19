@@ -1,5 +1,5 @@
 const { ApiPromise, WsProvider, Keyring } = require('@polkadot/api');
-const { encodeAddress, decodeAddress, keccakAsHex, evmToAddress } = require('@polkadot/util-crypto');
+const { encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm} = require('@polkadot/util-crypto');
 
 
 const nesting = {
@@ -441,6 +441,10 @@ class UniqueHelper extends ChainHelperBase {
     if(!toChainFormat) return evmToAddress(ethAddress);
     let info = await this.getChainProperties();
     return evmToAddress(ethAddress, info.ss58Format);
+  }
+
+  substrateAddressToEth(subAddress) {
+    return nesting.toChecksumAddress('0x' + Array.from(addressToEvm(subAddress), i => i.toString(16).padStart(2, '0')).join(''));
   }
 
   async getSubstrateAccountBalance(address) {

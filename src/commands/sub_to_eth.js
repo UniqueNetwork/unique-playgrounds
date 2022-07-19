@@ -1,9 +1,9 @@
-const { evmToAddress, validateAddress } = require('@polkadot/util-crypto');
+const { validateAddress } = require('@polkadot/util-crypto');
 
 const { Command } = require('../lib/cli');
 const { Logger } = require('../lib/logger');
 const { UniqueHelper } = require('../lib/unique');
-const { subToEth, getBalanceString } = require('../helpers/marketplace');
+const { getBalanceString } = require('../helpers/util');
 
 
 class SubToEth extends Command {
@@ -36,7 +36,7 @@ class SubToEth extends Command {
         logger.log(logger.fmt(`${address} is not valid substrate address`, 'fg.red'), logger.level.NONE);
         continue;
       }
-      let ethAddress = subToEth(address);
+      let ethAddress = uniqueHelper.substrateAddressToEth(address);
       logger.log([`${logger.fmt('Substrate address', 'fg.cyan')}:`, address], logger.level.NONE);
       let subBalance = balanceString(await uniqueHelper.getSubstrateAccountBalance(address));
       logger.log([`${logger.fmt('Address balance', 'fg.cyan')}:`, logger.fmt(subBalance, 'fg.yellow')], logger.level.NONE);

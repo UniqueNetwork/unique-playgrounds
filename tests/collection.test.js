@@ -1,6 +1,5 @@
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
-const { subToEth } = require('../src/helpers/marketplace');
 const { getConfig } = require('./config');
 
 describe('Minting tests', () => {
@@ -97,14 +96,14 @@ describe('Minting tests', () => {
   });
 
   it('Test transferToken', async() => {
-    let result = await collection.transferToken(alice, 1, {Ethereum: subToEth(alice.address)});
+    let result = await collection.transferToken(alice, 1, {Ethereum: uniqueHelper.substrateAddressToEth(alice.address)});
     await expect(result).toBe(true);
     let currentOwner = (await collection.getToken(1)).normalizedOwner;
-    await expect(currentOwner).toEqual({ethereum: subToEth(alice.address).toLocaleLowerCase()});
+    await expect(currentOwner).toEqual({ethereum: uniqueHelper.substrateAddressToEth(alice.address).toLocaleLowerCase()});
   });
 
   it('Test transferTokenFrom', async() => {
-    let result = await collection.transferTokenFrom(alice, 1, {Ethereum: subToEth(alice.address)}, {Substrate: alice.address});
+    let result = await collection.transferTokenFrom(alice, 1, {Ethereum: uniqueHelper.substrateAddressToEth(alice.address)}, {Substrate: alice.address});
     await expect(result).toBe(true);
     let currentOwner = (await collection.getToken(1)).normalizedOwner;
     await expect(currentOwner).toEqual({substrate: alice.address});

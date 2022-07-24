@@ -286,10 +286,14 @@ class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
-  signTransaction(sender, transaction, label = 'transaction') {
+  signTransaction(sender, transaction, label = 'transaction', options = null) {
+    const sign = callback => {
+      if(options !== null) return transaction.signAndSend(sender, options, callback);
+      return transaction.signAndSend(sender, callback);
+    }
     return new Promise(async (resolve, reject) => {
       try {
-        let unsub = await transaction.signAndSend(sender, result => {
+        let unsub = await sign(result => {
           const status = this.getTransactionStatus(result);
 
           if (status === this.transactionStatus.SUCCESS) {
@@ -813,6 +817,10 @@ class ChainGroup extends HelperGroup {
     const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])).toJSON();
     if(blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
     return blockHash;
+  }
+
+  async getNonce(address) {
+    return (await this.helper.api.query.system.account(address)).nonce.toNumber();
   }
 }
 

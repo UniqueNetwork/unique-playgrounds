@@ -1,6 +1,8 @@
+const crypto = require('crypto');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
+
 
 class TMPDir {
   constructor() {
@@ -23,6 +25,21 @@ const clearChainLog = chainLog => {
   });
 }
 
+const getTestHash = filename => {
+  return crypto.createHash('md5').update(path.basename(filename)).digest('hex');
+}
+
+const getTestAliceSeed = filename => {
+  return `//Alice+${getTestHash(filename)}`
+}
+
+const testSeedGenerator = (uniqueHelper, filename) => {
+  let hash = getTestHash(filename);
+  return seed => {
+    return uniqueHelper.util.fromSeed(`${seed}+${hash}`);
+  }
+}
+
 module.exports = {
-  TMPDir, clearChainLog
+  TMPDir, clearChainLog, getTestHash, testSeedGenerator, getTestAliceSeed
 }

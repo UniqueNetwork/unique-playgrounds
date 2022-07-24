@@ -3,12 +3,14 @@ const { expect } = require('chai');
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { getConfig } = require('./config');
+const { testSeedGenerator, getTestAliceSeed } = require('./misc/util');
 
 
 describe('Nonfungible tests', () => {
   let uniqueHelper;
   let collectionId = null;
   let alice;
+  let testSeed;
 
   before(async () => {
     const config = getConfig();
@@ -16,7 +18,10 @@ describe('Nonfungible tests', () => {
     uniqueHelper = new UniqueHelper(new loggerCls());
     if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
-    alice = uniqueHelper.util.fromSeed(config.mainSeed);
+    testSeed = testSeedGenerator(uniqueHelper, __filename);
+    alice = uniqueHelper.util.fromSeed(getTestAliceSeed(__filename));
+    let bob = testSeed('//Bob');
+    await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * (await uniqueHelper.balance.getOneTokenNominal()));
   });
 
   after(async () => {
@@ -110,7 +115,7 @@ describe('Nonfungible tests', () => {
   });
 
   it('Set collection sponsor', async () => {
-    let bob = uniqueHelper.util.fromSeed('//Bob');
+    let bob = testSeed('//Bob');
 
     let result = await uniqueHelper.collection.setSponsor(alice, collectionId, bob.address);
     expect(result).to.be.true;
@@ -131,7 +136,7 @@ describe('Nonfungible tests', () => {
   });
 
   it('Change collection owner', async () => {
-    let bob = uniqueHelper.util.fromSeed('//Bob');
+    let bob = testSeed('//Bob');
     let collectionId = (await uniqueHelper.nft.mintCollection(alice, {name: 'to bob', description: 'collection from alice to bob', tokenPrefix: 'atb'})).collectionId;
 
     let collection = await uniqueHelper.collection.getData(collectionId);
@@ -145,8 +150,8 @@ describe('Nonfungible tests', () => {
   });
 
   it('Add and remove collection admin', async () => {
-    let bob = uniqueHelper.util.fromSeed('//Bob');
-    let charlie = uniqueHelper.util.fromSeed('//Charlie');
+    let bob = testSeed('//Bob');
+    let charlie = testSeed('//Charlie');
     let result;
 
     expect(await uniqueHelper.collection.getAdmins(collectionId)).to.deep.eq([]);
@@ -216,7 +221,7 @@ describe('Nonfungible tests', () => {
   })
 
   it('Mint multiple tokens', async () => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     const result = await uniqueHelper.nft.mintMultipleTokens(alice, collectionId, [
       {owner: {substrate: bob.address}, properties: [{key: 'name', value: 'Same'}]},
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Same'}]}
@@ -236,7 +241,7 @@ describe('Nonfungible tests', () => {
   });
 
   it('Mint multiple tokens with one owner', async () => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     const result = await uniqueHelper.nft.mintMultipleTokensWithOneOwner(alice, collectionId, bob.address,[
       {properties: [{key: 'name', value: 'Same'}]}, {properties: [{key: 'name', value: 'Same'}]}
     ]);
@@ -253,9 +258,9 @@ describe('Nonfungible tests', () => {
   });
 
   it('Get collection tokens by address', async () => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
-    const charlie = uniqueHelper.util.fromSeed('//Charlie');
-    const dave = uniqueHelper.util.fromSeed('//Dave');
+    const bob = testSeed('//Bob');
+    const charlie = testSeed('//Charlie');
+    const dave = testSeed('//Dave');
 
     const collectionId = (await uniqueHelper.nft.mintCollection(alice, {name: 'test rpc tokens', description: 'test collection tokens by rpc', tokenPrefix: 'trt'})).collectionId;
 
@@ -283,7 +288,7 @@ describe('Nonfungible tests', () => {
       ]
     })).collectionId;
 
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * await uniqueHelper.balance.getOneTokenNominal());
 
     const tokenId  = (await uniqueHelper.nft.mintToken(alice, {

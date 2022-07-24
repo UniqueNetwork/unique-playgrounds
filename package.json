@@ -7,7 +7,9 @@
   "scripts": {
     "playground": "node cli.js run_playground",
     "command": "node cli.js run_command",
-    "test": "mocha --timeout 9999999 tests/**.test.js"
+    "feed-alices": "node tests/misc/feed-alices.js",
+    "test": "npm run feed-alices && mocha --timeout 9999999 --parallel tests/**.test.js",
+    "linetest": "npm run feed-alices && mocha --timeout 9999999 tests/**.test.js"
   },
   "engines": {
     "npm": ">=7.0.0",

@@ -3,8 +3,9 @@ const { expect } = require('chai');
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { getConfig } = require('./config');
+const { testSeedGenerator, getTestAliceSeed } = require('./misc/util');
 
-describe('Minting tests', () => {
+describe('UniqueNFTCollection tests', () => {
   let uniqueHelper;
   const collectionOptions = {
     name: 'to test', description: 'to test collection interface', tokenPrefix: 'ttci',
@@ -12,6 +13,7 @@ describe('Minting tests', () => {
   };
   let collection;
   let alice;
+  let testSeed;
 
   before(async () => {
     const config = getConfig();
@@ -19,8 +21,11 @@ describe('Minting tests', () => {
     uniqueHelper = new UniqueHelper(new loggerCls());
     if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
-    alice = uniqueHelper.util.fromSeed(config.mainSeed);
+    testSeed = testSeedGenerator(uniqueHelper, __filename);
+    alice = uniqueHelper.util.fromSeed(getTestAliceSeed(__filename));
     collection = await uniqueHelper.nft.mintCollection(alice, collectionOptions);
+    let bob = testSeed('//Bob');
+    await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * (await uniqueHelper.balance.getOneTokenNominal()));
   });
 
   after(async () => {
@@ -159,7 +164,7 @@ describe('Minting tests', () => {
   });
 
   it('Test getCollectionTokenNextSponsored', async () => {
-    let bob = uniqueHelper.util.fromSeed('//Bob');
+    let bob = testSeed('//Bob');
     expect(await uniqueHelper.collection.getTokenNextSponsored(0, 0, {Substrate: alice.address})).to.be.null;
 
     const collection = await uniqueHelper.nft.mintCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'});
@@ -188,21 +193,21 @@ describe('Minting tests', () => {
   });
 
   it('Test addAdmin', async() => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     let result = await collection.addAdmin(alice, {Substrate: bob.address});
     expect(result).to.be.true;
     expect(await collection.getAdmins()).to.deep.eq([{Substrate: bob.address}]);
   });
 
   it('Test removeAdmin', async() => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     let result = await collection.removeAdmin(alice, {Substrate: bob.address});
     expect(result).to.be.true;
     expect(await collection.getAdmins()).to.deep.eq([]);
   });
 
   it('Test mintMultipleTokens', async() => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     let result = await collection.mintMultipleTokens(alice, [
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Alice'}]},
       {owner: {Substrate: bob.address}, properties: [{key: 'name', value: 'Bob'}]},
@@ -226,8 +231,8 @@ describe('Minting tests', () => {
   });
 
   it('Test getTokensByAddress', async() => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
-    const charlie = uniqueHelper.util.fromSeed('//Charlie');
+    const bob = testSeed('//Bob');
+    const charlie = testSeed('//Charlie');
 
     const aliceTokens = await collection.getTokensByAddress({Substrate: alice.address});
     const bobTokens = await collection.getTokensByAddress({Substrate: bob.address});
@@ -239,7 +244,7 @@ describe('Minting tests', () => {
   })
 
   it('Test changeOwner', async() => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     let result = await collection.changeOwner(alice, bob.address);
     expect(result).to.be.true;
     expect((await collection.getData()).normalizedOwner).to.eq(bob.address);
@@ -253,7 +258,7 @@ describe('Minting tests', () => {
   });
 
   it('Test burn (full collection)', async() => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     let result = false;
     try {
       result = await collection.burn(bob);

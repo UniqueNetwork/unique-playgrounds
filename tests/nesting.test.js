@@ -3,10 +3,12 @@ const { expect } = require('chai');
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { getConfig } = require('./config');
+const { testSeedGenerator, getTestAliceSeed } = require('./misc/util');
 
 describe('Nesting tests', () => {
   let uniqueHelper;
   let alice;
+  let testSeed;
 
   before(async () => {
     const config = getConfig();
@@ -14,7 +16,8 @@ describe('Nesting tests', () => {
     uniqueHelper = new UniqueHelper(new loggerCls());
     if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
-    alice = uniqueHelper.util.fromSeed(config.mainSeed);
+    testSeed = testSeedGenerator(uniqueHelper, __filename);
+    alice = uniqueHelper.util.fromSeed(getTestAliceSeed(__filename));
   });
 
   after(async () => {
@@ -88,7 +91,7 @@ describe('Nesting tests', () => {
     // The topmost owner of the token #2 is still Alice
     expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, secondToken)).to.deep.eq({Substrate: alice.address});
 
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * await uniqueHelper.balance.getOneTokenNominal());
 
     // Transfer token #1 (Our root) to Bob

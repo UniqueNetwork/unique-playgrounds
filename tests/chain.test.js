@@ -3,11 +3,14 @@ const { expect } = require('chai');
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { getConfig } = require('./config');
+const { testSeedGenerator, getTestAliceSeed } = require('./misc/util');
+
 
 describe('Chain state tests', () => {
   let uniqueHelper;
   let alice;
   let bob;
+  let testSeed;
 
   before(async () => {
     const config = getConfig();
@@ -15,8 +18,10 @@ describe('Chain state tests', () => {
     uniqueHelper = new UniqueHelper(new loggerCls());
     if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
-    alice = uniqueHelper.util.fromSeed(config.mainSeed);
-    bob   = uniqueHelper.util.fromSeed('//Bob');
+    testSeed = testSeedGenerator(uniqueHelper, __filename);
+    alice = uniqueHelper.util.fromSeed(getTestAliceSeed(__filename));
+    bob = testSeed('//Bob');
+    await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * (await uniqueHelper.balance.getOneTokenNominal()));
   });
 
   after(async () => {

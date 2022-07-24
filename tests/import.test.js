@@ -8,6 +8,7 @@ const { UniqueExporter } = require('../src/helpers/export');
 const { UniqueImporter } = require('../src/helpers/import');
 const { getConfig } = require('./config');
 const { TMPDir } = require('./misc/util');
+const { testSeedGenerator, getTestAliceSeed } = require('./misc/util');
 
 describe('Import helper tests', () => {
   let uniqueHelper;
@@ -16,15 +17,16 @@ describe('Import helper tests', () => {
   let collectionId;
   let tmpDir;
   let alice;
+  let testSeed;
 
   const createCollection = async () => {
-    const dave = uniqueHelper.util.fromSeed('//Dave');
+    const dave = testSeed('//Dave');
     collectionId = (await uniqueHelper.nft.mintCollection(alice, {
       name: 'to import', description: 'collection id to import', tokenPrefix: 'imp',
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
     })).collectionId;
-    const bob = uniqueHelper.util.fromSeed('//Bob');
-    const charlie = uniqueHelper.util.fromSeed('//Charlie');
+    const bob = testSeed('//Bob');
+    const charlie = testSeed('//Charlie');
     await uniqueHelper.nft.mintMultipleTokens(alice, collectionId, [
       {owner: {substrate: bob.address}, properties: [{key: 'name', value: 'Bob'}]},
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Alice'}]}
@@ -54,7 +56,8 @@ describe('Import helper tests', () => {
     uniqueHelper = new UniqueHelper(logger);
     if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
-    alice = uniqueHelper.util.fromSeed(config.mainSeed);
+    testSeed = testSeedGenerator(uniqueHelper, __filename);
+    alice = uniqueHelper.util.fromSeed(getTestAliceSeed(__filename));
     importer = new UniqueImporter(alice, uniqueHelper, tmpDir.path, logger);
     exporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger);
     await createCollection();

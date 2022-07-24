@@ -7,6 +7,7 @@ const { SilentLogger, Logger } = require('../src/lib/logger');
 const { UniqueExporter } = require('../src/helpers/export');
 const { getConfig } = require('./config');
 const { TMPDir } = require('./misc/util');
+const { testSeedGenerator, getTestAliceSeed } = require('./misc/util');
 
 
 describe('Export helper tests', () => {
@@ -16,6 +17,7 @@ describe('Export helper tests', () => {
   let collectionId = null;
   let tmpDir;
   let alice;
+  let testSeed;
 
   before(async () => {
     const config = getConfig();
@@ -26,7 +28,8 @@ describe('Export helper tests', () => {
     if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
     exporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger);
-    alice = uniqueHelper.util.fromSeed(config.mainSeed);
+    testSeed = testSeedGenerator(uniqueHelper, __filename);
+    alice = uniqueHelper.util.fromSeed(getTestAliceSeed(__filename));
   });
 
   after(async () => {
@@ -35,7 +38,7 @@ describe('Export helper tests', () => {
   });
 
   it('Export token owners by blockNumber', async () => {
-    const bob = uniqueHelper.util.fromSeed('//Bob');
+    const bob = testSeed('//Bob');
     let collection = (await uniqueHelper.nft.mintCollection(alice, {
       name: 'test', description: 'test', tokenPrefix: 'tst',
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
@@ -77,9 +80,9 @@ describe('Export helper tests', () => {
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
     };
     collectionId = (await uniqueHelper.nft.mintCollection(alice, collection)).collectionId;
-    const bob = uniqueHelper.util.fromSeed('//Bob');
-    const charlie = uniqueHelper.util.fromSeed('//Charlie');
-    const dave = uniqueHelper.util.fromSeed('//Dave');
+    const bob = testSeed('//Bob');
+    const charlie = testSeed('//Charlie');
+    const dave = testSeed('//Dave');
 
     await uniqueHelper.nft.mintMultipleTokens(alice, collectionId, [
       {owner: {substrate: alice.address}, properties: [{key: 'name', value: 'alice token'}]},

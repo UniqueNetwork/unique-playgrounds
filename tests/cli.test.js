@@ -1,3 +1,4 @@
+const { expect } = require('chai');
 const { getUsage, parseArgs, Command } = require('../src/lib/cli');
 
 describe('Cli lib tests', () => {
@@ -11,8 +12,8 @@ describe('Cli lib tests', () => {
       }
     }
     const cmd = new TestCommand();
-    await expect(cmd.getHelp()).toEqual('USAGE:\n\ncommand [options] [arguments]\n\nCommand to sum two int numbers\n\nArguments:\n  first    First int argument\n  second   Second int argument\n\nOptions:\n  --help   Print this page');
-    await expect(cmd.parse(['1', '5'])).toEqual({
+    expect(cmd.getHelp()).to.eq('USAGE:\n\ncommand [options] [arguments]\n\nCommand to sum two int numbers\n\nArguments:\n  first    First int argument\n  second   Second int argument\n\nOptions:\n  --help   Print this page');
+    expect(cmd.parse(['1', '5'])).to.deep.eq({
       parsed: {
         optional: {},
         positional: {
@@ -22,12 +23,12 @@ describe('Cli lib tests', () => {
       },
       errors: []
     });
-    await expect(await cmd.execute(['1', '5'])).toEqual(6);
+    expect(await cmd.execute(['1', '5'])).to.eq(6);
   });
 
   it('parseArgs method', () => {
     const empty = parseArgs(['1', '2', '3'], {});
-    expect(empty).toEqual({
+    expect(empty).to.deep.eq({
       parsed: {
         optional: {},
         positional: {}
@@ -38,7 +39,7 @@ describe('Cli lib tests', () => {
     const onePosition = parseArgs(['one'], {
       positional: [{key: 'arg', help: 'Argument for command'}]
     });
-    expect(onePosition).toEqual({
+    expect(onePosition).to.deep.eq({
       parsed: {
         optional: {},
         positional: {
@@ -51,7 +52,7 @@ describe('Cli lib tests', () => {
     const onePositionWithoutArg = parseArgs([], {
       positional: [{key: 'arg', help: 'Argument for command'}]
     });
-    expect(onePositionWithoutArg).toEqual({
+    expect(onePositionWithoutArg).to.deep.eq({
       parsed: {
         optional: {},
         positional: {
@@ -64,7 +65,7 @@ describe('Cli lib tests', () => {
     const onePositionMultiple = parseArgs(['one', 'two', 'three'], {
       positional: [{key: 'arg', help: 'Argument for command', isArray: true}]
     });
-    expect(onePositionMultiple).toEqual({
+    expect(onePositionMultiple).to.deep.eq({
       parsed: {
         optional: {},
         positional: {
@@ -80,7 +81,7 @@ describe('Cli lib tests', () => {
         {key: 'second_arg', help: 'Thia argument will be newer used'}
       ]
     });
-    expect(onePositionWithError).toEqual({
+    expect(onePositionWithError).to.deep.eq({
       parsed: {
         optional: {},
         positional: {
@@ -110,14 +111,14 @@ describe('Cli lib tests', () => {
       },
       errors: []
     }
-    expect(withOption).toEqual(withOptionExpected);
-    expect(withOptionAfterArg).toEqual(withOptionExpected);
+    expect(withOption).to.deep.eq(withOptionExpected);
+    expect(withOptionAfterArg).to.deep.eq(withOptionExpected);
 
     const withInvalidOption = parseArgs(['arg', '--option'], {
       positional: [{key: 'arg', help: 'Argument for command'}],
       optional: [{key: 'option', help: 'Option for command'}]
     });
-    expect(withInvalidOption).toEqual({
+    expect(withInvalidOption).to.deep.eq({
       parsed: {
         optional: {
           option: ({}).undefined
@@ -148,14 +149,14 @@ describe('Cli lib tests', () => {
       },
       errors: []
     };
-    expect(withBoolOption).toEqual(expectedWithBoolOption);
-    expect(withBoolOptionAfterArg).toEqual(expectedWithBoolOption);
+    expect(withBoolOption).to.deep.eq(expectedWithBoolOption);
+    expect(withBoolOptionAfterArg).to.deep.eq(expectedWithBoolOption);
 
     const withBoolOptionWithoutOption = parseArgs(['arg'], {
       positional: [{key: 'arg', help: 'Argument for command'}],
       optional: [{key: 'option', isBool: true, help: 'Option for command'}]
     });
-    expect(withBoolOptionWithoutOption).toEqual({
+    expect(withBoolOptionWithoutOption).to.deep.eq({
       parsed: {
         optional: {
           option: false
@@ -180,7 +181,7 @@ describe('Cli lib tests', () => {
       ],
       help: 'Complicated command to prefix args and send them to email'
     });
-    expect(withManyArgsAndOptions).toEqual({
+    expect(withManyArgsAndOptions).to.deep.eq({
       parsed: {
         optional: {
           prefix: 'prefix',
@@ -199,35 +200,35 @@ describe('Cli lib tests', () => {
 
   it('getUsage method', () => {
     const empty = getUsage('empty', {});
-    expect(empty).toEqual('USAGE:\n\nempty [options]\n\nOptions:\n  --help Print this page');
+    expect(empty).to.eq('USAGE:\n\nempty [options]\n\nOptions:\n  --help Print this page');
 
     const onePosition = getUsage('one', {
       positional: [{key: 'arg', help: 'Argument for command'}]
     });
-    expect(onePosition).toEqual('USAGE:\n\none [options] [arguments]\n\nArguments:\n  arg    Argument for command\n\nOptions:\n  --help Print this page');
+    expect(onePosition).to.eq('USAGE:\n\none [options] [arguments]\n\nArguments:\n  arg    Argument for command\n\nOptions:\n  --help Print this page');
 
     const onePositionMultiple = getUsage('one', {
       positional: [{key: 'arg', help: 'Argument for command', isArray: true}]
     });
-    expect(onePositionMultiple).toEqual('USAGE:\n\none [options] [arguments]\n\nArguments:\n  arg    Argument for command [can be multiple]\n\nOptions:\n  --help Print this page');
+    expect(onePositionMultiple).to.eq('USAGE:\n\none [options] [arguments]\n\nArguments:\n  arg    Argument for command [can be multiple]\n\nOptions:\n  --help Print this page');
 
     const onePositionWithHelp = getUsage('one', {
       positional: [{key: 'arg', help: 'Argument for command'}],
       help: 'Command with one argument'
     });
-    expect(onePositionWithHelp).toEqual('USAGE:\n\none [options] [arguments]\n\nCommand with one argument\n\nArguments:\n  arg    Argument for command\n\nOptions:\n  --help Print this page')
+    expect(onePositionWithHelp).to.eq('USAGE:\n\none [options] [arguments]\n\nCommand with one argument\n\nArguments:\n  arg    Argument for command\n\nOptions:\n  --help Print this page')
 
     const withOption = getUsage('with_option', {
       positional: [{key: 'arg', help: 'Argument for command'}],
       optional: [{key: 'option', help: 'Option for command'}]
     });
-    expect(withOption).toEqual('USAGE:\n\nwith_option [options] [arguments]\n\nArguments:\n  arg              Argument for command\n\nOptions:\n  --option [value] Option for command\n  --help           Print this page');
+    expect(withOption).to.eq('USAGE:\n\nwith_option [options] [arguments]\n\nArguments:\n  arg              Argument for command\n\nOptions:\n  --option [value] Option for command\n  --help           Print this page');
 
     const withBoolOption = getUsage('with_option', {
       positional: [{key: 'arg', help: 'Argument for command'}],
       optional: [{key: 'option', isBool: true, help: 'Option for command'}]
     });
-    expect(withBoolOption).toEqual('USAGE:\n\nwith_option [options] [arguments]\n\nArguments:\n  arg      Argument for command\n\nOptions:\n  --option Option for command\n  --help   Print this page');
+    expect(withBoolOption).to.eq('USAGE:\n\nwith_option [options] [arguments]\n\nArguments:\n  arg      Argument for command\n\nOptions:\n  --option Option for command\n  --help   Print this page');
 
     const withManyArgsAndOptions = getUsage('complicated_command', {
       positional: [
@@ -242,6 +243,6 @@ describe('Cli lib tests', () => {
       ],
       help: 'Complicated command to prefix args and send them to email'
     });
-    expect(withManyArgsAndOptions).toEqual('USAGE:\n\ncomplicated_command [options] [arguments]\n\nComplicated command to prefix args and send them to email\n\nArguments:\n  one              First arg\n  two              Second arg\n  extra            Other args [can be multiple]\n\nOptions:\n  --prefix [value] Args prefix\n  --lowercase      Lowercase result\n  --email [value]  Email addresses to send result [can be multiple]\n  --help           Print this page');
+    expect(withManyArgsAndOptions).to.eq('USAGE:\n\ncomplicated_command [options] [arguments]\n\nComplicated command to prefix args and send them to email\n\nArguments:\n  one              First arg\n  two              Second arg\n  extra            Other args [can be multiple]\n\nOptions:\n  --prefix [value] Args prefix\n  --lowercase      Lowercase result\n  --email [value]  Email addresses to send result [can be multiple]\n  --help           Print this page');
   });
 });

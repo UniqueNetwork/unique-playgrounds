@@ -1,16 +1,16 @@
+const { expect } = require('chai');
+
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { getConfig } = require('./config');
 
 
-describe('Minting tests', () => {
-  jest.setTimeout(60 * 60 * 1000);
-
+describe('Nonfungible tests', () => {
   let uniqueHelper;
   let collectionId = null;
   let alice;
 
-  beforeAll(async () => {
+  before(async () => {
     const config = getConfig();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
@@ -19,7 +19,7 @@ describe('Minting tests', () => {
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
 
-  afterAll(async () => {
+  after(async () => {
     await uniqueHelper.disconnect();
   });
 
@@ -35,10 +35,10 @@ describe('Minting tests', () => {
       }
     }
     collectionId = (await uniqueHelper.nft.mintCollection(alice, collection)).collectionId;
-    await expect(collectionId).not.toBeNull();
+    expect(collectionId).not.to.be.null;
     const collectionInfo = await uniqueHelper.collection.getData(collectionId);
 
-    await expect(collectionInfo).toEqual({
+    expect(collectionInfo).to.deep.eq({
       "id": collectionId,
       "name": collection.name,
       "description": collection.description,
@@ -82,52 +82,52 @@ describe('Minting tests', () => {
   it('Set collection properties', async() => {
     let res, info;
     res = await uniqueHelper.collection.setProperties(alice, collectionId, [{key: 'first', value: 'First value'}]);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.properties).toEqual([{key: 'first', value: 'First value'}, {key: 'is_substrate', value: 'true'}]);
+    expect(info.raw.properties).to.deep.eq([{key: 'first', value: 'First value'}, {key: 'is_substrate', value: 'true'}]);
 
     res = await uniqueHelper.collection.setProperties(alice, collectionId, [{key: 'first', value: 'New value'}, {key: 'second', value: 'Second value'}]);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.properties).toEqual([{key: 'first', value: 'New value'}, {key: 'is_substrate', value: 'true'}, {key: 'second', value: 'Second value'}]);
+    expect(info.raw.properties).to.deep.eq([{key: 'first', value: 'New value'}, {key: 'is_substrate', value: 'true'}, {key: 'second', value: 'Second value'}]);
   });
 
   it('Delete collection properties', async() => {
     let res, info;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.properties).toEqual([{key: 'first', value: 'New value'}, {key: 'is_substrate', value: 'true'}, {key: 'second', value: 'Second value'}]);
+    expect(info.raw.properties).to.deep.eq([{key: 'first', value: 'New value'}, {key: 'is_substrate', value: 'true'}, {key: 'second', value: 'Second value'}]);
 
     res = await uniqueHelper.collection.deleteProperties(alice, collectionId, ['first', 'second']);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.properties).toEqual([{key: 'is_substrate', value: 'true'}]);
+    expect(info.raw.properties).to.deep.eq([{key: 'is_substrate', value: 'true'}]);
   });
 
   it('Burn collection', async () => {
     let burnId = (await uniqueHelper.nft.mintCollection(alice, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'})).collectionId;
     let result = await uniqueHelper.collection.burn(alice, burnId);
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
   });
 
   it('Set collection sponsor', async () => {
     let bob = uniqueHelper.util.fromSeed('//Bob');
 
     let result = await uniqueHelper.collection.setSponsor(alice, collectionId, bob.address);
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
     result = await uniqueHelper.collection.confirmSponsorship(bob, collectionId);
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
     try {
       await uniqueHelper.collection.confirmSponsorship(alice, collectionId, `collection #${collectionId} sponsorship`);
     }
     catch(e) {
-      await expect(e.toString()).toEqual(`Error: Unable to confirm collection sponsorship for collection #${collectionId} sponsorship`)
+      expect(e.toString()).to.eq(`Error: Unable to confirm collection sponsorship for collection #${collectionId} sponsorship`)
     }
   });
 
   it('Set collection limits', async () => {
     let result = await uniqueHelper.collection.setLimits(alice, collectionId, {sponsorTransferTimeout: 0});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
   });
 
   it('Change collection owner', async () => {
@@ -135,13 +135,13 @@ describe('Minting tests', () => {
     let collectionId = (await uniqueHelper.nft.mintCollection(alice, {name: 'to bob', description: 'collection from alice to bob', tokenPrefix: 'atb'})).collectionId;
 
     let collection = await uniqueHelper.collection.getData(collectionId);
-    await expect(uniqueHelper.util.normalizeSubstrateAddress(collection.raw.owner)).toEqual(alice.address);
+    expect(uniqueHelper.util.normalizeSubstrateAddress(collection.raw.owner)).to.eq(alice.address);
 
     let result = await uniqueHelper.collection.changeOwner(alice, collectionId, bob.address);
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
     collection = await uniqueHelper.collection.getData(collectionId);
-    await expect(uniqueHelper.util.normalizeSubstrateAddress(collection.raw.owner)).toEqual(bob.address);
+    expect(uniqueHelper.util.normalizeSubstrateAddress(collection.raw.owner)).to.eq(bob.address);
   });
 
   it('Add and remove collection admin', async () => {
@@ -149,36 +149,36 @@ describe('Minting tests', () => {
     let charlie = uniqueHelper.util.fromSeed('//Charlie');
     let result;
 
-    await expect(await uniqueHelper.collection.getAdmins(collectionId)).toEqual([]);
+    expect(await uniqueHelper.collection.getAdmins(collectionId)).to.deep.eq([]);
 
     result = await uniqueHelper.collection.addAdmin(alice, collectionId, {Substrate: bob.address});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
-    await expect(await uniqueHelper.collection.getAdmins(collectionId)).toEqual([{Substrate: bob.address}]);
+    expect(await uniqueHelper.collection.getAdmins(collectionId)).to.deep.eq([{Substrate: bob.address}]);
 
     result = await uniqueHelper.collection.addAdmin(alice, collectionId, {Substrate: charlie.address});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
-    await expect(await uniqueHelper.collection.getAdmins(collectionId)).toEqual([{Substrate: bob.address}, {Substrate: charlie.address}]);
+    expect(await uniqueHelper.collection.getAdmins(collectionId)).to.deep.eq([{Substrate: bob.address}, {Substrate: charlie.address}]);
 
     result = await uniqueHelper.collection.removeAdmin(alice, collectionId, {Substrate: charlie.address});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
-    await expect(await uniqueHelper.collection.getAdmins(collectionId)).toEqual([{Substrate: bob.address}]);
+    expect(await uniqueHelper.collection.getAdmins(collectionId)).to.deep.eq([{Substrate: bob.address}]);
 
     result = await uniqueHelper.collection.removeAdmin(alice, collectionId, {Substrate: bob.address});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
-    await expect(await uniqueHelper.collection.getAdmins(collectionId)).toEqual([]);
+    expect(await uniqueHelper.collection.getAdmins(collectionId)).to.deep.eq([]);
   });
 
 
   it('Mint token', async () => {
     const result = await uniqueHelper.nft.mintToken(alice, {collectionId, owner: alice.address, properties: [{key: 'name', value: 'Alice'}]});
-    await expect(result.collectionId).toEqual(collectionId);
-    await expect(result.tokenId).toEqual(1);
+    expect(result.collectionId).to.eq(collectionId);
+    expect(result.tokenId).to.eq(1);
     const tokenData = await uniqueHelper.nft.getToken(collectionId, result.tokenId);
-    await expect(tokenData).toEqual({
+    expect(tokenData).to.deep.eq({
       properties: [{key: 'name', value: 'Alice'}],
       owner: {
         Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)
@@ -196,23 +196,23 @@ describe('Minting tests', () => {
     })).collectionId;
     await uniqueHelper.nft.mintToken(alice, {collectionId, owner: alice.address, properties: [{key: 'name', value: 'Alice'}]});
     let transferResult = await uniqueHelper.nft.transferToken(alice, collectionId, 1, {Ethereum: uniqueHelper.address.substrateToEth(alice.address)});
-    await expect(transferResult).toBe(true);
+    expect(transferResult).to.be.true;
     let currentOwner = (await uniqueHelper.nft.getToken(collectionId, 1)).normalizedOwner;
-    await expect(currentOwner).toEqual({ethereum: uniqueHelper.address.substrateToEth(alice.address).toLocaleLowerCase()});
+    expect(currentOwner).to.deep.eq({ethereum: uniqueHelper.address.substrateToEth(alice.address).toLocaleLowerCase()});
     let transferFromResult = await uniqueHelper.nft.transferTokenFrom(alice, collectionId, 1, {Ethereum: uniqueHelper.address.substrateToEth(alice.address)}, {Substrate: alice.address});
-    await expect(transferFromResult).toBe(true);
+    expect(transferFromResult).to.be.true;
     currentOwner = (await uniqueHelper.nft.getToken(collectionId, 1)).normalizedOwner;
-    await expect(currentOwner).toEqual({substrate: alice.address});
+    expect(currentOwner).to.deep.eq({substrate: alice.address});
   });
 
   it('Burn token', async () => {
     const result = await uniqueHelper.nft.burnToken(alice, collectionId, 1);
-    await expect(result.success).toBe(true);
-    await expect(result.token.collectionId).toEqual(collectionId);
-    await expect(result.token.tokenId).toEqual(1);
-    await expect(uniqueHelper.util.normalizeSubstrateAddress(result.token.owner.substrate)).toEqual(alice.address);
+    expect(result.success).to.be.true;
+    expect(result.token.collectionId).to.eq(collectionId);
+    expect(result.token.tokenId).to.eq(1);
+    expect(uniqueHelper.util.normalizeSubstrateAddress(result.token.owner.substrate)).to.eq(alice.address);
     const tokenData = await uniqueHelper.nft.getToken(collectionId, result.token.tokenId);
-    await expect(tokenData).toBeNull();
+    expect(tokenData).to.be.null;
   })
 
   it('Mint multiple tokens', async () => {
@@ -221,17 +221,17 @@ describe('Minting tests', () => {
       {owner: {substrate: bob.address}, properties: [{key: 'name', value: 'Same'}]},
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Same'}]}
     ]);
-    await expect(result.length).toEqual(2);
+    expect(result.length).to.eq(2);
     const expectedTokens = [{owner: bob.address, id: 2}, {owner: alice.address, id: 3}];
     for(let i = 0; i < result.length; i++) {
       let token = result[i];
       let expected = expectedTokens[i];
-      await expect(token.tokenId).toEqual(expected.id);
-      await expect(token.collectionId).toEqual(collectionId);
+      expect(token.tokenId).to.eq(expected.id);
+      expect(token.collectionId).to.eq(collectionId);
 
       let chainToken = await uniqueHelper.nft.getToken(collectionId, token.tokenId);
-      await expect(chainToken.properties).toEqual([{key: 'name', value: 'Same'}]);
-      await expect(chainToken.normalizedOwner.substrate).toEqual(expected.owner);
+      expect(chainToken.properties).to.deep.eq([{key: 'name', value: 'Same'}]);
+      expect(chainToken.normalizedOwner.substrate).to.eq(expected.owner);
     }
   });
 
@@ -240,15 +240,15 @@ describe('Minting tests', () => {
     const result = await uniqueHelper.nft.mintMultipleTokensWithOneOwner(alice, collectionId, bob.address,[
       {properties: [{key: 'name', value: 'Same'}]}, {properties: [{key: 'name', value: 'Same'}]}
     ]);
-    await expect(result.length).toEqual(2);
+    expect(result.length).to.eq(2);
     for(let i = 0; i < result.length; i++) {
       let token = result[i];
-      await expect(token.tokenId).toEqual(i + 4);
-      await expect(token.collectionId).toEqual(collectionId);
+      expect(token.tokenId).to.eq(i + 4);
+      expect(token.collectionId).to.eq(collectionId);
 
       let chainToken = await uniqueHelper.nft.getToken(collectionId, token.tokenId);
-      await expect(chainToken.properties).toEqual([{key: 'name', value: 'Same'}]);
-      await expect(chainToken.normalizedOwner.substrate).toEqual(bob.address);
+      expect(chainToken.properties).to.deep.eq([{key: 'name', value: 'Same'}]);
+      expect(chainToken.normalizedOwner.substrate).to.eq(bob.address);
     }
   });
 
@@ -267,11 +267,11 @@ describe('Minting tests', () => {
     ]);
 
     const aliceTokens = await uniqueHelper.nft.getTokensByAddress(collectionId, {Substrate: alice.address});
-    await expect(aliceTokens).toEqual([1, 4]);
+    expect(aliceTokens).to.deep.eq([1, 4]);
     const bobTokens = await uniqueHelper.nft.getTokensByAddress(collectionId, {Substrate: bob.address});
-    await expect(bobTokens).toEqual([2]);
+    expect(bobTokens).to.deep.eq([2]);
     const daveTokens = await uniqueHelper.nft.getTokensByAddress(collectionId, {Substrate: dave.address});
-    await expect(daveTokens).toEqual([]);
+    expect(daveTokens).to.deep.eq([]);
   });
 
   it('Change token properties', async() => {
@@ -290,7 +290,7 @@ describe('Minting tests', () => {
       collectionId, owner: bob.address, properties: [{key: 'admin', value: 'From Alice with love'}]
     })).tokenId;
 
-    await expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).toEqual([{key: 'admin', value: 'From Alice with love'}]);
+    expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).to.deep.eq([{key: 'admin', value: 'From Alice with love'}]);
 
     // Bob can't change admin property
     let result = false;
@@ -298,15 +298,15 @@ describe('Minting tests', () => {
       result = await uniqueHelper.nft.setTokenProperties(bob, collectionId, tokenId, [{key: 'admin', value: 'I cant change this'}]);
     }
     catch (e) {
-      await expect(e.toString()).toEqual(`Error: Unable to set token properties for token #${tokenId} from collection #${collectionId}`);
+      expect(e.toString()).to.eq(`Error: Unable to set token properties for token #${tokenId} from collection #${collectionId}`);
     }
-    await expect(result).toBe(false);
-    await expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).toEqual([{key: 'admin', value: 'From Alice with love'}]);
+    expect(result).to.be.false;
+    expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).to.deep.eq([{key: 'admin', value: 'From Alice with love'}]);
 
     // Bob can change user property
     result = await uniqueHelper.nft.setTokenProperties(bob, collectionId, tokenId, [{key: 'user', value: 'Thanks!'}]);
-    await expect(result).toBe(true);
-    await expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).toEqual([
+    expect(result).to.be.true;
+    expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).to.deep.eq([
       {key: 'admin', value: 'From Alice with love'},
       {key: 'user', value: 'Thanks!'},
     ]);
@@ -317,18 +317,18 @@ describe('Minting tests', () => {
       result = await uniqueHelper.nft.setTokenProperties(alice, collectionId, tokenId, [{key: 'user', value: 'I cant change this'}]);
     }
     catch (e) {
-      await expect(e.toString()).toEqual(`Error: Unable to set token properties for token #${tokenId} from collection #${collectionId}`);
+      expect(e.toString()).to.eq(`Error: Unable to set token properties for token #${tokenId} from collection #${collectionId}`);
     }
-    await expect(result).toBe(false);
-    await expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).toEqual([
+    expect(result).to.be.false;
+    expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).to.deep.eq([
       {key: 'admin', value: 'From Alice with love'},
       {key: 'user', value: 'Thanks!'},
     ]);
 
     // Bob can change admin property
     result = await uniqueHelper.nft.setTokenProperties(alice, collectionId, tokenId, [{key: 'admin', value: 'What was the question?'}]);
-    await expect(result).toBe(true);
-    await expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).toEqual([
+    expect(result).to.be.true;
+    expect((await uniqueHelper.nft.getToken(collectionId, tokenId)).properties).to.deep.eq([
       {key: 'admin', value: 'What was the question?'},
       {key: 'user', value: 'Thanks!'},
     ]);
@@ -348,55 +348,55 @@ describe('Minting tests', () => {
     })).tokenId;
 
     let info = await uniqueHelper.nft.getToken(collectionId, tokenId);
-    await expect(info.properties).toEqual([{key: 'first', value: 'First key'}, {key: 'second', value: 'Second key'}]);
+    expect(info.properties).to.deep.eq([{key: 'first', value: 'First key'}, {key: 'second', value: 'Second key'}]);
 
     let res = await uniqueHelper.nft.deleteTokenProperties(alice, collectionId, tokenId, ['first']);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.nft.getToken(collectionId, tokenId);
-    await expect(info.properties).toEqual([{key: 'second', value: 'Second key'}]);
+    expect(info.properties).to.deep.eq([{key: 'second', value: 'Second key'}]);
 
     res = await uniqueHelper.nft.setTokenProperties(alice, collectionId, tokenId, [{key: 'first', value: 'New first'}]);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.nft.getToken(collectionId, tokenId);
-    await expect(info.properties).toEqual([{key: 'first', value: 'New first'}, {key: 'second', value: 'Second key'}]);
+    expect(info.properties).to.deep.eq([{key: 'first', value: 'New first'}, {key: 'second', value: 'Second key'}]);
 
     res = await uniqueHelper.nft.deleteTokenProperties(alice, collectionId, tokenId, ['first', 'second']);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.nft.getToken(collectionId, tokenId);
-    await expect(info.properties).toEqual([]);
+    expect(info.properties).to.deep.eq([]);
   });
 
   it('Modify collection permissions', async() => {
     let collectionId = (await uniqueHelper.nft.mintCollection(alice, {name: 'with perms', description: 'collection with permissions', tokenPrefix: 'wp'})).collectionId;
     let info = await uniqueHelper.collection.getData(collectionId), res;
-    await expect(info.raw.permissions).toEqual({
+    expect(info.raw.permissions).to.deep.eq({
       access: 'Normal',
       mintMode: false,
       nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
     });
 
     res = await uniqueHelper.collection.setPermissions(alice, collectionId, {mintMode: true});
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.permissions).toEqual({
+    expect(info.raw.permissions).to.deep.eq({
       access: 'Normal',
       mintMode: true,
       nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
     });
 
     res = await uniqueHelper.collection.setPermissions(alice, collectionId, {access: 'AllowList'});
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.permissions).toEqual({
+    expect(info.raw.permissions).to.deep.eq({
       access: 'AllowList',
       mintMode: true,
       nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
     });
 
     res = await uniqueHelper.collection.setPermissions(alice, collectionId, {access: 'Normal', mintMode: false});
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.permissions).toEqual({
+    expect(info.raw.permissions).to.deep.eq({
       access: 'Normal',
       mintMode: false,
       nesting: {collectionAdmin: false, tokenOwner: false, restricted: null}
@@ -409,22 +409,22 @@ describe('Minting tests', () => {
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: false, tokenOwner: true}}]
     })).collectionId, info, res;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.tokenPropertyPermissions).toEqual([
+    expect(info.raw.tokenPropertyPermissions).to.deep.eq([
       {key: 'name', permission: {mutable: true, collectionAdmin: false, tokenOwner: true}}
     ]);
 
     res = await uniqueHelper.nft.setTokenPropertyPermissions(alice, collectionId, [{key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.tokenPropertyPermissions).toEqual([
+    expect(info.raw.tokenPropertyPermissions).to.deep.eq([
       {key: 'name', permission: {mutable: true, collectionAdmin: false, tokenOwner: true}},
       {key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}
     ]);
 
     res = await uniqueHelper.nft.setTokenPropertyPermissions(alice, collectionId, [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]);
-    await expect(res).toBe(true);
+    expect(res).to.be.true;
     info = await uniqueHelper.collection.getData(collectionId);
-    await expect(info.raw.tokenPropertyPermissions).toEqual([
+    expect(info.raw.tokenPropertyPermissions).to.deep.eq([
       {key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
       {key: 'owner', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}
     ]);

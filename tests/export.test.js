@@ -1,5 +1,7 @@
 const fs = require('fs');
 
+const { expect } = require('chai');
+
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { UniqueExporter } = require('../src/helpers/export');
@@ -8,8 +10,6 @@ const { TMPDir } = require('./misc/util');
 
 
 describe('Export helper tests', () => {
-  jest.setTimeout(60 * 60 * 1000);
-
   let uniqueHelper;
   let logger;
   let exporter;
@@ -17,7 +17,7 @@ describe('Export helper tests', () => {
   let tmpDir;
   let alice;
 
-  beforeAll(async () => {
+  before(async () => {
     const config = getConfig();
     tmpDir = new TMPDir();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
@@ -29,7 +29,7 @@ describe('Export helper tests', () => {
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
 
-  afterAll(async () => {
+  after(async () => {
     tmpDir.remove();
     await uniqueHelper.disconnect();
   });
@@ -50,14 +50,14 @@ describe('Export helper tests', () => {
       owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)},
       properties: [{key: 'name', value: 'alice token'}]
     };
-    await expect(tokens).toEqual([aliceTokenData]);
+    expect(tokens).to.deep.eq([aliceTokenData]);
 
     // Make changes
     await collection.setTokenProperties(alice, 1, [{key: 'name', value: 'bob token'}]);
     await collection.transferToken(alice, 1, {Substrate: bob.address});
 
     tokens = await exporter.getAllTokens(collectionData);
-    await expect(tokens).toEqual([{
+    expect(tokens).to.deep.eq([{
       tokenId: 1,
       owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(bob.address)},
       properties: [{key: 'name', value: 'bob token'}]
@@ -66,7 +66,7 @@ describe('Export helper tests', () => {
     // Get state before changes
     let newExporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger, await uniqueHelper.chain.getBlockHashByNumber(lastBlockAfterMint));
     tokens = await newExporter.getAllTokens(collectionData);
-    await expect(tokens).toEqual([aliceTokenData]);
+    expect(tokens).to.deep.eq([aliceTokenData]);
   });
 
   it('Export collection', async () => {
@@ -130,7 +130,7 @@ describe('Export helper tests', () => {
       }
     }
 
-    await expect(collectionData).toEqual(expectedCollectionInfo);
+    expect(collectionData).to.deep.eq(expectedCollectionInfo);
     const tokens = await exporter.getAllTokens(collectionData);
     const expectedTokens = [
       {
@@ -154,14 +154,14 @@ describe('Export helper tests', () => {
         properties: [{key: 'name', value: 'dave token'}]
       },
     ];
-    await expect(tokens).toEqual(expectedTokens);
+    expect(tokens).to.deep.eq(expectedTokens);
 
     await exporter.export(collectionId, true);
 
     let fileCollectionData = JSON.parse(fs.readFileSync(exporter.getCollectionFilename(collectionId)).toString());
-    await expect(fileCollectionData).toEqual(expectedCollectionInfo);
+    expect(fileCollectionData).to.deep.eq(expectedCollectionInfo);
 
     let fileTokensData = JSON.parse(fs.readFileSync(exporter.getTokensFilename(collectionId)).toString());
-    await expect(fileTokensData).toEqual(expectedTokens);
+    expect(fileTokensData).to.deep.eq(expectedTokens);
   })
 });

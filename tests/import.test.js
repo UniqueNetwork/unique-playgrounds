@@ -1,5 +1,7 @@
 const fs = require('fs');
 
+const { expect } = require('chai');
+
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { UniqueExporter } = require('../src/helpers/export');
@@ -8,8 +10,6 @@ const { getConfig } = require('./config');
 const { TMPDir } = require('./misc/util');
 
 describe('Import helper tests', () => {
-  jest.setTimeout(60 * 60 * 1000);
-
   let uniqueHelper;
   let importer;
   let exporter;
@@ -46,7 +46,7 @@ describe('Import helper tests', () => {
     changed_ownership: false
   }
 
-  beforeAll(async () => {
+  before(async () => {
     const config = getConfig();
     tmpDir = new TMPDir();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
@@ -60,7 +60,7 @@ describe('Import helper tests', () => {
     await createCollection();
   });
 
-  afterAll(async () => {
+  after(async () => {
     await uniqueHelper.disconnect();
   });
 
@@ -69,29 +69,29 @@ describe('Import helper tests', () => {
     let tokens = await exporter.getAllTokens(collectionData);
 
     let stateFile = importer.getStateFilename(collectionData.id);
-    await expect(fs.existsSync(stateFile)).toBe(false);
+    expect(fs.existsSync(stateFile)).to.be.false;
 
     await importer.createCollection(collectionData);
 
     let state = JSON.parse(fs.readFileSync(stateFile).toString());
-    await expect(state).toEqual({
+    expect(state).to.deep.eq({
       ...expectedState,
       id: state.id,
       created_tokens: []
     });
 
     let collection = await exporter.genCollectionData(state.id);
-    await expect({...collectionData.raw, owner: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)}).toEqual({...collection.raw});
+    expect({...collectionData.raw, owner: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)}).to.deep.eq({...collection.raw});
 
     await importer.createTokens(collectionData, tokens);
 
     collection = await exporter.genCollectionData(state.id);
     let newTokens = await exporter.getAllTokens(collection);
 
-    await expect(newTokens).toEqual(tokens);
+    expect(newTokens).to.deep.eq(tokens);
 
     state = JSON.parse(fs.readFileSync(stateFile).toString());
-    await expect(state).toEqual({
+    expect(state).to.deep.eq({
       ...expectedState,
       id: state.id,
       created_tokens: [1, 2, 3, 4]
@@ -100,12 +100,12 @@ describe('Import helper tests', () => {
     await importer.changeOwnership(collectionData);
 
     collection = await exporter.genCollectionData(state.id);
-    await expect(collection.raw).toEqual(collectionData.raw);
-    await expect(collection.admins).toEqual(collectionData.admins);
-    await expect(collection.owner).toEqual(collectionData.owner);
+    expect(collection.raw).to.deep.eq(collectionData.raw);
+    expect(collection.admins).to.deep.eq(collectionData.admins);
+    expect(collection.owner).to.deep.eq(collectionData.owner);
 
     state = JSON.parse(fs.readFileSync(stateFile).toString());
-    await expect(state).toEqual({
+    expect(state).to.deep.eq({
       ...expectedState,
       id: state.id,
       created_tokens: [1, 2, 3, 4],
@@ -137,7 +137,7 @@ describe('Import helper tests', () => {
     await importer.createCollection(collectionData);
 
     let state = JSON.parse(fs.readFileSync(stateFile).toString());
-    await expect(state).toEqual({
+    expect(state).to.deep.eq({
       ...expectedState,
       id: existedCollectionId,
       created_tokens: []

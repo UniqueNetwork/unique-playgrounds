@@ -8,7 +8,7 @@ Helpers for Unique Network chain
 
 You can copy this file into your project (It requires only `@polkadot/*` and `@unique-nft/types` packages, see their list in `package.json`)
 
-You can see documentation in [docs.md](/docs.md) or see usages in tests (like `tests/mint.test.js` and `tests/collection.test.js`)
+You can see documentation in [docs.md](/docs.md) or see usages in tests (like `tests/nonfungible.test.js` and `tests/collection.test.js`)
 
 ## Commands
 

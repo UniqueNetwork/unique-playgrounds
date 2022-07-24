@@ -7,7 +7,7 @@
   "scripts": {
     "playground": "node cli.js run_playground",
     "command": "node cli.js run_command",
-    "test": "jest --config tests/misc/jest.config.json --runInBand"
+    "test": "mocha --timeout 9999999 tests/**.test.js"
   },
   "engines": {
     "npm": ">=7.0.0",
@@ -25,6 +25,7 @@
     "@unique-nft/opal-testnet-types": "0.5.3"
   },
   "devDependencies": {
-    "jest": "27.5.1"
+    "mocha": "10.0.0",
+    "chai": "4.3.6"
   }
 }

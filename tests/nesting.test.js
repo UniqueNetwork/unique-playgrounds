@@ -1,14 +1,14 @@
+const { expect } = require('chai');
+
 const { UniqueHelper } = require('../src/lib/unique');
 const { SilentLogger, Logger } = require('../src/lib/logger');
 const { getConfig } = require('./config');
 
 describe('Nesting tests', () => {
-  jest.setTimeout(60 * 60 * 1000);
-
   let uniqueHelper;
   let alice;
 
-  beforeAll(async () => {
+  before(async () => {
     const config = getConfig();
     const loggerCls = config.silentLogger ? SilentLogger : Logger;
     uniqueHelper = new UniqueHelper(new loggerCls());
@@ -17,7 +17,7 @@ describe('Nesting tests', () => {
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
   });
 
-  afterAll(async () => {
+  after(async () => {
     try {
       await uniqueHelper.disconnect();
     } catch (e) {}
@@ -25,9 +25,9 @@ describe('Nesting tests', () => {
 
   it('Test nesting addresses', () => {
     const firstToken = uniqueHelper.util.getNestingTokenAddress(1, 1);
-    expect(firstToken).toEqual('0xF8238ccFFF8ED887463Fd5e00000000100000001');
+    expect(firstToken).to.eq('0xF8238ccFFF8ED887463Fd5e00000000100000001');
     const secondToken = uniqueHelper.util.getNestingTokenAddress(13, 17);
-    expect(secondToken).toEqual('0xf8238cCFFf8Ed887463fD5E00000000D00000011');
+    expect(secondToken).to.eq('0xf8238cCFFf8Ed887463fD5E00000000D00000011');
   });
 
   it('Test change nesting permissions', async () => {
@@ -35,28 +35,28 @@ describe('Nesting tests', () => {
 
     // Nesting disabled by default
     let collection = await uniqueHelper.collection.getData(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null});
+    expect(collection.raw.permissions.nesting).to.deep.eq({tokenOwner: false, collectionAdmin: false, restricted: null});
 
     // Manually enable nesting
     let result = await uniqueHelper.collection.enableNesting(alice, collectionId, {tokenOwner: true});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
     collection = await uniqueHelper.collection.getData(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: null});
+    expect(collection.raw.permissions.nesting).to.deep.eq({tokenOwner: true, collectionAdmin: false, restricted: null});
 
     // Allow nesting only for this collection tokens
     result = await uniqueHelper.collection.enableNesting(alice, collectionId, {tokenOwner: true, restricted: [collectionId]});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
     collection = await uniqueHelper.collection.getData(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: [collectionId]});
+    expect(collection.raw.permissions.nesting).to.deep.eq({tokenOwner: true, collectionAdmin: false, restricted: [collectionId]});
 
     // Disable nesting back
     result = await uniqueHelper.collection.disableNesting(alice, collectionId);
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
     collection = await uniqueHelper.collection.getData(collectionId);
-    await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null});
+    expect(collection.raw.permissions.nesting).to.deep.eq({tokenOwner: false, collectionAdmin: false, restricted: null});
   });
 
   it('Test nest and unnest tokens', async () => {
@@ -71,39 +71,39 @@ describe('Nesting tests', () => {
 
     // Nest token #3 to token #1
     let result = await uniqueHelper.nft.nestToken(alice, {collectionId, tokenId: thirdToken}, {collectionId, tokenId: firstToken});
-    await expect(result).toBe(true);
-    await expect((await uniqueHelper.nft.getToken(collectionId, thirdToken)).normalizedOwner).toEqual(rootAddress);
-    await expect(await uniqueHelper.nft.getTokenChildren(collectionId, firstToken)).toEqual([{collection: collectionId, token: thirdToken}]);
+    expect(result).to.be.true;
+    expect((await uniqueHelper.nft.getToken(collectionId, thirdToken)).normalizedOwner).to.deep.eq(rootAddress);
+    expect(await uniqueHelper.nft.getTokenChildren(collectionId, firstToken)).to.deep.eq([{collection: collectionId, token: thirdToken}]);
 
     // The topmost owner of the token #3 is still Alice
-    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: alice.address});
+    expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, thirdToken)).to.deep.eq({Substrate: alice.address});
 
     // Nest token #2 to token #3
     const thirdTokenAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, thirdToken).toLocaleLowerCase()};
     result = await uniqueHelper.nft.nestToken(alice, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken});
-    await expect(result).toBe(true);
-    await expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
-    await expect(await uniqueHelper.nft.getTokenChildren(collectionId, thirdToken)).toEqual([{collection: collectionId, token: secondToken}]);
+    expect(result).to.be.true;
+    expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).to.deep.eq(thirdTokenAddress);
+    expect(await uniqueHelper.nft.getTokenChildren(collectionId, thirdToken)).to.deep.eq([{collection: collectionId, token: secondToken}]);
 
     // The topmost owner of the token #2 is still Alice
-    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: alice.address});
+    expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, secondToken)).to.deep.eq({Substrate: alice.address});
 
     const bob = uniqueHelper.util.fromSeed('//Bob');
     await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * await uniqueHelper.balance.getOneTokenNominal());
 
     // Transfer token #1 (Our root) to Bob
     result = await uniqueHelper.nft.transferToken(alice, collectionId, firstToken, {Substrate: bob.address});
-    await expect(result).toBe(true);
+    expect(result).to.be.true;
 
     // Bob now root-owns Token #2 and #3
-    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: bob.address});
-    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: bob.address});
+    expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, secondToken)).to.deep.eq({Substrate: bob.address});
+    expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, thirdToken)).to.deep.eq({Substrate: bob.address});
 
     // Now Bob able to unnest any element from nesting tree (Token #2 for example)
-    await expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
+    expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).to.deep.eq(thirdTokenAddress);
     result = await uniqueHelper.nft.unnestToken(bob, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken}, {Substrate: bob.address});
-    await expect(result).toBe(true);
-    await expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).toEqual({substrate: bob.address});
-    await expect(await uniqueHelper.nft.getTokenChildren(collectionId, thirdToken)).toEqual([])
+    expect(result).to.be.true;
+    expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).to.deep.eq({substrate: bob.address});
+    expect(await uniqueHelper.nft.getTokenChildren(collectionId, thirdToken)).to.deep.eq([])
   });
 });

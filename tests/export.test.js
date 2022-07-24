@@ -36,18 +36,18 @@ describe('Export helper tests', () => {
 
   it('Export token owners by blockNumber', async () => {
     const bob = uniqueHelper.util.fromSeed('//Bob');
-    let collection = (await uniqueHelper.mintNFTCollection(alice, {
+    let collection = (await uniqueHelper.nft.mintCollection(alice, {
       name: 'test', description: 'test', tokenPrefix: 'tst',
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
     }));
     await collection.mintToken(alice, alice.address, [{key: 'name', value: 'alice token'}]);
-    const lastBlockAfterMint = await uniqueHelper.getLatestBlockNumber();
+    const lastBlockAfterMint = await uniqueHelper.chain.getLatestBlockNumber();
     const collectionData = await exporter.genCollectionData(collection.collectionId);
 
     let tokens = await exporter.getAllTokens(collectionData);
     const aliceTokenData = {
       tokenId: 1,
-      owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)},
+      owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)},
       properties: [{key: 'name', value: 'alice token'}]
     };
     await expect(tokens).toEqual([aliceTokenData]);
@@ -59,12 +59,12 @@ describe('Export helper tests', () => {
     tokens = await exporter.getAllTokens(collectionData);
     await expect(tokens).toEqual([{
       tokenId: 1,
-      owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)},
+      owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(bob.address)},
       properties: [{key: 'name', value: 'bob token'}]
     }]);
 
     // Get state before changes
-    let newExporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger, await uniqueHelper.getBlockHashByNumber(lastBlockAfterMint));
+    let newExporter = new UniqueExporter(uniqueHelper, tmpDir.path, logger, await uniqueHelper.chain.getBlockHashByNumber(lastBlockAfterMint));
     tokens = await newExporter.getAllTokens(collectionData);
     await expect(tokens).toEqual([aliceTokenData]);
   });
@@ -76,12 +76,12 @@ describe('Export helper tests', () => {
       tokenPrefix: 'exp',
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
     };
-    collectionId = (await uniqueHelper.mintNFTCollection(alice, collection)).collectionId;
+    collectionId = (await uniqueHelper.nft.mintCollection(alice, collection)).collectionId;
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const charlie = uniqueHelper.util.fromSeed('//Charlie');
     const dave = uniqueHelper.util.fromSeed('//Dave');
 
-    await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
+    await uniqueHelper.nft.mintMultipleTokens(alice, collectionId, [
       {owner: {substrate: alice.address}, properties: [{key: 'name', value: 'alice token'}]},
       {owner: {Substrate: bob.address}, properties: [{key: 'name', value: 'bob token'}]},
       {owner: {Substrate: charlie.address}, properties: [{key: 'name', value: 'charlie token'}]},
@@ -98,7 +98,7 @@ describe('Export helper tests', () => {
       "tokensCount": 4,
       "admins": [],
       "raw": {
-        "owner": await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address),
+        "owner": await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address),
         "mode": "NFT",
         "readOnly": false,
         "name": uniqueHelper.util.str2vec(collection.name).map(x => x.toString()),
@@ -135,22 +135,22 @@ describe('Export helper tests', () => {
     const expectedTokens = [
       {
         tokenId: 1,
-        owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)},
+        owner: {substrate: alice.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)},
         properties: [{key: 'name', value: 'alice token'}]
       },
       {
         tokenId: 2,
-        owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(bob.address)},
+        owner: {substrate: bob.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(bob.address)},
         properties: [{key: 'name', value: 'bob token'}]
       },
       {
         tokenId: 3,
-        owner: {substrate: charlie.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(charlie.address)},
+        owner: {substrate: charlie.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(charlie.address)},
         properties: [{key: 'name', value: 'charlie token'}]
       },
       {
         tokenId: 4,
-        owner: {substrate: dave.address}, chainOwner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(dave.address)},
+        owner: {substrate: dave.address}, chainOwner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(dave.address)},
         properties: [{key: 'name', value: 'dave token'}]
       },
     ];

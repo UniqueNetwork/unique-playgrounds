@@ -24,16 +24,16 @@ describe('Balances tests',  () => {
 
   it('Test transferBalanceToSubstrateAccount', async () => {
     const bob = uniqueHelper.util.fromSeed('//Bob');
-    const oneToken = await uniqueHelper.getOneTokenNominal();
+    const oneToken = await uniqueHelper.balance.getOneTokenNominal();
 
-    let aliceBalance = {before: await uniqueHelper.getSubstrateAccountBalance(alice.address)};
-    let bobBalance = {before: await uniqueHelper.getSubstrateAccountBalance(bob.address)};
+    let aliceBalance = {before: await uniqueHelper.balance.getSubstrate(alice.address)};
+    let bobBalance = {before: await uniqueHelper.balance.getSubstrate(bob.address)};
 
-    let result = await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, oneToken);
+    let result = await uniqueHelper.balance.transferToSubstrate(alice, bob.address, oneToken);
     await expect(result).toBe(true);
 
-    bobBalance.after = await uniqueHelper.getSubstrateAccountBalance(bob.address);
-    aliceBalance.after = await uniqueHelper.getSubstrateAccountBalance(alice.address)
+    bobBalance.after = await uniqueHelper.balance.getSubstrate(bob.address);
+    aliceBalance.after = await uniqueHelper.balance.getSubstrate(alice.address)
 
     await expect(bobBalance.after).toEqual(bobBalance.before + oneToken);
     await expect(aliceBalance.before - aliceBalance.after).toBeGreaterThanOrEqual(oneToken);

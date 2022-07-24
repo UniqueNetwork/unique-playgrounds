@@ -31,7 +31,7 @@ describe('Chain state tests', () => {
   });
 
   it('Test chain properties', async () => {
-    const properties = await uniqueHelper.getChainProperties();
+    const properties = await uniqueHelper.chain.getChainProperties();
     await expect(typeof properties.ss58Format).toEqual('number');
     for(let key of ['tokenDecimals', 'tokenSymbol']) {
       await expect(Array.isArray(properties[key])).toBe(true);
@@ -40,44 +40,44 @@ describe('Chain state tests', () => {
     await expect(typeof properties.tokenDecimals[0]).toEqual('number');
     await expect(typeof properties.tokenSymbol[0]).toEqual('string');
 
-    const oneToken = await uniqueHelper.getOneTokenNominal();
+    const oneToken = await uniqueHelper.balance.getOneTokenNominal();
     await expect(oneToken).toEqual(10n ** BigInt(properties.tokenDecimals[0]));
   });
 
   it('Test block info', async() => {
-    const lastBlock = await uniqueHelper.getLatestBlockNumber();
+    const lastBlock = await uniqueHelper.chain.getLatestBlockNumber();
     await expect(typeof lastBlock).toEqual('number');
     await expect(lastBlock > 0).toBe(true);
-    const blockHash = await uniqueHelper.getBlockHashByNumber(lastBlock);
+    const blockHash = await uniqueHelper.chain.getBlockHashByNumber(lastBlock);
     await expect(typeof blockHash).toEqual('string');
     await expect(blockHash.length).toEqual(66);
-    const nonExistentHash = await uniqueHelper.getBlockHashByNumber(lastBlock + 10_000);
+    const nonExistentHash = await uniqueHelper.chain.getBlockHashByNumber(lastBlock + 10_000);
     await expect(nonExistentHash).toBeNull();
   });
 
   it('Test getCollectionTokenNextSponsored', async () => {
-    await expect(await uniqueHelper.getCollectionTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
+    await expect(await uniqueHelper.collection.getTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
 
-    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
-    const tokenId = (await uniqueHelper.mintNFTToken(alice, {collectionId, owner: bob.address})).tokenId;
+    const collectionId = (await uniqueHelper.nft.mintCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
+    const tokenId = (await uniqueHelper.nft.mintToken(alice, {collectionId, owner: bob.address})).tokenId;
 
-    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, tokenId, {Substrate: alice.address})).toBeNull();
+    await expect(await uniqueHelper.collection.getTokenNextSponsored(collectionId, tokenId, {Substrate: alice.address})).toBeNull();
 
-    await uniqueHelper.setNFTCollectionSponsor(alice, collectionId, alice.address);
-    await uniqueHelper.confirmNFTCollectionSponsorship(alice, collectionId);
+    await uniqueHelper.collection.setSponsor(alice, collectionId, alice.address);
+    await uniqueHelper.collection.confirmSponsorship(alice, collectionId);
 
-    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, tokenId, {Substrate: alice.address})).toEqual(0);
-    await uniqueHelper.transferNFTToken(bob, collectionId, tokenId, {Substrate: alice.address});
+    await expect(await uniqueHelper.collection.getTokenNextSponsored(collectionId, tokenId, {Substrate: alice.address})).toEqual(0);
+    await uniqueHelper.nft.transferToken(bob, collectionId, tokenId, {Substrate: alice.address});
 
-    await expect(await uniqueHelper.getCollectionTokenNextSponsored(collectionId, tokenId, {Substrate: alice.address})).toBeLessThanOrEqual(5);
-    await uniqueHelper.transferNFTToken(alice, collectionId, tokenId, {Substrate: bob.address});
+    await expect(await uniqueHelper.collection.getTokenNextSponsored(collectionId, tokenId, {Substrate: alice.address})).toBeLessThanOrEqual(5);
+    await uniqueHelper.nft.transferToken(alice, collectionId, tokenId, {Substrate: bob.address});
   });
 
-  it('Test ethAddressToSubstrate', async () => {
-    await expect(await uniqueHelper.ethAddressToSubstrate('0x5c03d3976Ad16F50451d95113728E0229C50cAB8')).toEqual('5Gppc4U5bFnhXCo3GUshZfooP85nMKrAfKvqpprFf8rhviop')
+  it('Test address.ethToSubstrate', async () => {
+    await expect(await uniqueHelper.address.ethToSubstrate('0x5c03d3976Ad16F50451d95113728E0229C50cAB8')).toEqual('5Gppc4U5bFnhXCo3GUshZfooP85nMKrAfKvqpprFf8rhviop')
   });
 
-  it('Test substrateAddressToEth', async () => {
-    await expect(await uniqueHelper.substrateAddressToEth('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY')).toEqual('0xd43593c715Fdd31c61141ABd04a99FD6822c8558');
+  it('Test address.substrateToEth', async () => {
+    await expect(await uniqueHelper.address.substrateToEth('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY')).toEqual('0xd43593c715Fdd31c61141ABd04a99FD6822c8558');
   });
 });

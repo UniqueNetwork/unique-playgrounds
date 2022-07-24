@@ -31,79 +31,79 @@ describe('Nesting tests', () => {
   });
 
   it('Test change nesting permissions', async () => {
-    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to nest', description: 'collection with nesting', tokenPrefix: 'tn'})).collectionId;
+    const collectionId = (await uniqueHelper.nft.mintCollection(alice, {name: 'to nest', description: 'collection with nesting', tokenPrefix: 'tn'})).collectionId;
 
     // Nesting disabled by default
-    let collection = await uniqueHelper.getCollection(collectionId);
+    let collection = await uniqueHelper.collection.getData(collectionId);
     await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null});
 
     // Manually enable nesting
-    let result = await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true});
+    let result = await uniqueHelper.collection.enableNesting(alice, collectionId, {tokenOwner: true});
     await expect(result).toBe(true);
 
-    collection = await uniqueHelper.getCollection(collectionId);
+    collection = await uniqueHelper.collection.getData(collectionId);
     await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: null});
 
     // Allow nesting only for this collection tokens
-    result = await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true, restricted: [collectionId]});
+    result = await uniqueHelper.collection.enableNesting(alice, collectionId, {tokenOwner: true, restricted: [collectionId]});
     await expect(result).toBe(true);
 
-    collection = await uniqueHelper.getCollection(collectionId);
+    collection = await uniqueHelper.collection.getData(collectionId);
     await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: true, collectionAdmin: false, restricted: [collectionId]});
 
     // Disable nesting back
-    result = await uniqueHelper.disableCollectionNesting(alice, collectionId);
+    result = await uniqueHelper.collection.disableNesting(alice, collectionId);
     await expect(result).toBe(true);
 
-    collection = await uniqueHelper.getCollection(collectionId);
+    collection = await uniqueHelper.collection.getData(collectionId);
     await expect(collection.raw.permissions.nesting).toEqual({tokenOwner: false, collectionAdmin: false, restricted: null});
   });
 
   it('Test nest and unnest tokens', async () => {
-    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 'to nest', description: 'collection with nesting', tokenPrefix: 'tn'})).collectionId;
-    await uniqueHelper.enableCollectionNesting(alice, collectionId, {tokenOwner: true});
+    const collectionId = (await uniqueHelper.nft.mintCollection(alice, {name: 'to nest', description: 'collection with nesting', tokenPrefix: 'tn'})).collectionId;
+    await uniqueHelper.collection.enableNesting(alice, collectionId, {tokenOwner: true});
 
-    const [firstToken, secondToken, thirdToken] = (await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
+    const [firstToken, secondToken, thirdToken] = (await uniqueHelper.nft.mintMultipleTokens(alice, collectionId, [
       {owner: {substrate: alice.address}}, {owner: {Substrate: alice.address}}, {owner: {Substrate: alice.address}}
     ])).map(x => x.tokenId);
 
     const rootAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, firstToken).toLocaleLowerCase()};
 
     // Nest token #3 to token #1
-    let result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: thirdToken}, {collectionId, tokenId: firstToken});
+    let result = await uniqueHelper.nft.nestToken(alice, {collectionId, tokenId: thirdToken}, {collectionId, tokenId: firstToken});
     await expect(result).toBe(true);
-    await expect((await uniqueHelper.getToken(collectionId, thirdToken)).normalizedOwner).toEqual(rootAddress);
-    await expect(await uniqueHelper.getTokenChildren(collectionId, firstToken)).toEqual([{collection: collectionId, token: thirdToken}]);
+    await expect((await uniqueHelper.nft.getToken(collectionId, thirdToken)).normalizedOwner).toEqual(rootAddress);
+    await expect(await uniqueHelper.nft.getTokenChildren(collectionId, firstToken)).toEqual([{collection: collectionId, token: thirdToken}]);
 
     // The topmost owner of the token #3 is still Alice
-    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: alice.address});
+    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: alice.address});
 
     // Nest token #2 to token #3
     const thirdTokenAddress = {ethereum: uniqueHelper.util.getNestingTokenAddress(collectionId, thirdToken).toLocaleLowerCase()};
-    result = await uniqueHelper.nestCollectionToken(alice, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken});
+    result = await uniqueHelper.nft.nestToken(alice, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken});
     await expect(result).toBe(true);
-    await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
-    await expect(await uniqueHelper.getTokenChildren(collectionId, thirdToken)).toEqual([{collection: collectionId, token: secondToken}]);
+    await expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
+    await expect(await uniqueHelper.nft.getTokenChildren(collectionId, thirdToken)).toEqual([{collection: collectionId, token: secondToken}]);
 
     // The topmost owner of the token #2 is still Alice
-    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: alice.address});
+    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: alice.address});
 
     const bob = uniqueHelper.util.fromSeed('//Bob');
-    await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, 10n * await uniqueHelper.getOneTokenNominal());
+    await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * await uniqueHelper.balance.getOneTokenNominal());
 
     // Transfer token #1 (Our root) to Bob
-    result = await uniqueHelper.transferNFTToken(alice, collectionId, firstToken, {Substrate: bob.address});
+    result = await uniqueHelper.nft.transferToken(alice, collectionId, firstToken, {Substrate: bob.address});
     await expect(result).toBe(true);
 
     // Bob now root-owns Token #2 and #3
-    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: bob.address});
-    await expect(await uniqueHelper.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: bob.address});
+    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, secondToken)).toEqual({Substrate: bob.address});
+    await expect(await uniqueHelper.nft.getTokenTopmostOwner(collectionId, thirdToken)).toEqual({Substrate: bob.address});
 
     // Now Bob able to unnest any element from nesting tree (Token #2 for example)
-    await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
-    result = await uniqueHelper.unnestCollectionToken(bob, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken}, {Substrate: bob.address});
+    await expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).toEqual(thirdTokenAddress);
+    result = await uniqueHelper.nft.unnestToken(bob, {collectionId, tokenId: secondToken}, {collectionId, tokenId: thirdToken}, {Substrate: bob.address});
     await expect(result).toBe(true);
-    await expect((await uniqueHelper.getToken(collectionId, secondToken)).normalizedOwner).toEqual({substrate: bob.address});
-    await expect(await uniqueHelper.getTokenChildren(collectionId, thirdToken)).toEqual([])
+    await expect((await uniqueHelper.nft.getToken(collectionId, secondToken)).normalizedOwner).toEqual({substrate: bob.address});
+    await expect(await uniqueHelper.nft.getTokenChildren(collectionId, thirdToken)).toEqual([])
   });
 });

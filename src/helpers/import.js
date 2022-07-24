@@ -81,7 +81,7 @@ class UniqueImporter {
     let tokensToCreate = [], tokenId = firstToken, tokensLimit = 100;
     const mintTokens = async () => {
       if(!tokensToCreate.length) return;
-      const expectedFirstTokenId = (await this.uniqueHelper.getCollectionLastTokenId(collectionId)) + 1;
+      const expectedFirstTokenId = (await this.uniqueHelper.nft.getLastTokenId(collectionId)) + 1;
       if(expectedFirstTokenId !== tokensToCreate[0].tokenId) throw Error(`Expected first token to mint #${expectedFirstTokenId}, got #${tokensToCreate[0].tokenId}`);
       let data = [];
       for(let expToken of tokensToCreate) {
@@ -91,7 +91,7 @@ class UniqueImporter {
         });
       }
       const tokensToStr = arr => arr.map(x => `${x.tokenId}`).join(', ');
-      let newTokens = await this.uniqueHelper.mintMultipleNFTTokens(this.signer, collectionId, data, `Collection #${collectionId} (Tokens #${tokensToStr(tokensToCreate)})`);
+      let newTokens = await this.uniqueHelper.nft.mintMultipleTokens(this.signer, collectionId, data, `Collection #${collectionId} (Tokens #${tokensToStr(tokensToCreate)})`);
       if (newTokens.length < tokensToCreate.length) throw Error(`Unable to create tokens ${tokensToStr(tokensToCreate)}`);
       if (tokensToStr(tokensToCreate) !== tokensToStr(newTokens)) throw Error(`Token has unexpected tokenId (${tokensToStr(newTokens)} instead of ${tokensToStr(tokensToCreate)})`);
       this.logger.log(`Created tokens #${tokensToStr(newTokens)}`);
@@ -107,7 +107,7 @@ class UniqueImporter {
       if(tokensToCreate.length >= tokensLimit || needBreak || !expToken) await mintTokens();
       if(needBreak) break;
       if(!expToken) {
-        let toBurn = await this.uniqueHelper.mintNFTToken(
+        let toBurn = await this.uniqueHelper.nft.mintToken(
           this.signer, {collectionId, owner: this.signer.address.toString()},
           `Collection #${collectionId} (Token #${tokenId})`
         );
@@ -126,8 +126,8 @@ class UniqueImporter {
   }
 
   async createAndBurnCollection(exportCollectionId)  {
-    let collectionId = (await this.uniqueHelper.mintNFTCollection(this.signer, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'})).collectionId;
-    await this.uniqueHelper.burnNFTCollection(this.signer, collectionId);
+    let collectionId = (await this.uniqueHelper.nft.mintCollection(this.signer, {name: 'to burn', description: 'to burn', tokenPrefix: 'brn'})).collectionId;
+    await this.uniqueHelper.collection.burn(this.signer, collectionId);
     let importState = new ImportState(this, exportCollectionId);
     importState.updateState({id: collectionId, is_created: true, is_burned: true});
     return collectionId;
@@ -146,10 +146,10 @@ class UniqueImporter {
     }
 
     for(let admin of exportedCollection.admins) {
-      await this.uniqueHelper.addNFTCollectionAdmin(this.signer, collectionId, admin);
+      await this.uniqueHelper.collection.addAdmin(this.signer, collectionId, admin);
     }
 
-    let result = await this.uniqueHelper.changeNFTCollectionOwner(this.signer, collectionId, exportedCollection.normalizedOwner);
+    let result = await this.uniqueHelper.collection.changeOwner(this.signer, collectionId, exportedCollection.normalizedOwner);
     importState.updateState({changed_ownership: result});
   }
 
@@ -165,7 +165,7 @@ class UniqueImporter {
     let collectionId = importState.state.id;
 
     if(collectionId) {
-      let existedCollection = await this.uniqueHelper.getCollection(collectionId);
+      let existedCollection = await this.uniqueHelper.collection.getData(collectionId);
       if(existedCollection === null) {
         this.logger.log('No collection with id from state, state cleared', this.logger.level.WARNING);
         importState.state = importState.getNewState();
@@ -195,7 +195,7 @@ class UniqueImporter {
         if(Object.keys(limits).length > 0) collectionOptions.limits = limits;
       }
 
-      collectionId = (await this.uniqueHelper.mintNFTCollection(this.signer, collectionOptions, `exported collection #${exportCollectionId}`)).collectionId;
+      collectionId = (await this.uniqueHelper.nft.mintCollection(this.signer, collectionOptions, `exported collection #${exportCollectionId}`)).collectionId;
       importState.updateState({
         is_created: true, id: collectionId,
         has_properties: true, has_token_property_permissions: true,
@@ -212,7 +212,7 @@ class UniqueImporter {
         this.logger.log(`No confirmed sponsorship, nothing to do, ${JSON.stringify(exportedCollection.raw.sponsorship)}`);
       }
       else {
-        let result = await this.uniqueHelper.setNFTCollectionSponsor(this.signer, collectionId, exportedCollection.raw.sponsorship.Confirmed);
+        let result = await this.uniqueHelper.nft.setSponsor(this.signer, collectionId, exportedCollection.raw.sponsorship.Confirmed);
         importState.updateState({has_sponsorship: result});
       }
     }
@@ -224,7 +224,7 @@ class UniqueImporter {
       }
       let result = true;
       if(Object.keys(limits).length > 0) {
-        result = await this.uniqueHelper.setNFTCollectionLimits(this.signer, collectionId, limits);
+        result = await this.uniqueHelper.nft.setLimits(this.signer, collectionId, limits);
       }
       importState.updateState({has_limits: result});
     }

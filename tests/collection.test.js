@@ -20,7 +20,7 @@ describe('Minting tests', () => {
     if(config.forcedNetwork) uniqueHelper.forceNetwork(config.forcedNetwork);
     await uniqueHelper.connect(config.wsEndpoint);
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
-    collection = await uniqueHelper.mintNFTCollection(alice, collectionOptions);
+    collection = await uniqueHelper.nft.mintCollection(alice, collectionOptions);
   });
 
   afterAll(async () => {
@@ -83,7 +83,7 @@ describe('Minting tests', () => {
     let token = await collection.getToken(1);
     await expect(token).toEqual({
       properties: [{key: 'name', value: 'Alice'}],
-      owner: {Substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)},
+      owner: {Substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)},
       normalizedOwner: {substrate: alice.address}
     });
   });
@@ -96,14 +96,14 @@ describe('Minting tests', () => {
   });
 
   it('Test transferToken', async() => {
-    let result = await collection.transferToken(alice, 1, {Ethereum: uniqueHelper.substrateAddressToEth(alice.address)});
+    let result = await collection.transferToken(alice, 1, {Ethereum: uniqueHelper.address.substrateToEth(alice.address)});
     await expect(result).toBe(true);
     let currentOwner = (await collection.getToken(1)).normalizedOwner;
-    await expect(currentOwner).toEqual({ethereum: uniqueHelper.substrateAddressToEth(alice.address).toLocaleLowerCase()});
+    await expect(currentOwner).toEqual({ethereum: uniqueHelper.address.substrateToEth(alice.address).toLocaleLowerCase()});
   });
 
   it('Test transferTokenFrom', async() => {
-    let result = await collection.transferTokenFrom(alice, 1, {Ethereum: uniqueHelper.substrateAddressToEth(alice.address)}, {Substrate: alice.address});
+    let result = await collection.transferTokenFrom(alice, 1, {Ethereum: uniqueHelper.address.substrateToEth(alice.address)}, {Substrate: alice.address});
     await expect(result).toBe(true);
     let currentOwner = (await collection.getToken(1)).normalizedOwner;
     await expect(currentOwner).toEqual({substrate: alice.address});
@@ -116,7 +116,7 @@ describe('Minting tests', () => {
       token: {
         tokenId: 1,
         collectionId: collection.collectionId,
-        owner: {substrate: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)}
+        owner: {substrate: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)}
       }
     });
     await expect(await collection.getLastTokenId()).toEqual(1);
@@ -125,13 +125,13 @@ describe('Minting tests', () => {
   it('Test setSponsor', async() => {
     let result = await collection.setSponsor(alice, alice.address);
     await expect(result).toBe(true);
-    await expect((await collection.getData()).raw.sponsorship).toEqual({Unconfirmed: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)});
+    await expect((await collection.getData()).raw.sponsorship).toEqual({Unconfirmed: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)});
   });
 
   it('Test confirmSponsorship', async() => {
     let result = await collection.confirmSponsorship(alice);
     await expect(result).toBe(true);
-    await expect((await collection.getData()).raw.sponsorship).toEqual({Confirmed: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)});
+    await expect((await collection.getData()).raw.sponsorship).toEqual({Confirmed: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)});
   });
 
   it('Test setLimits', async() => {
@@ -160,11 +160,9 @@ describe('Minting tests', () => {
 
   it('Test getCollectionTokenNextSponsored', async () => {
     let bob = uniqueHelper.util.fromSeed('//Bob');
-    expect(await uniqueHelper.getCollectionTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
+    expect(await uniqueHelper.collection.getTokenNextSponsored(0, 0, {Substrate: alice.address})).toBeNull();
 
-    const collectionId = (await uniqueHelper.mintNFTCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'})).collectionId;
-
-    const collection = uniqueHelper.getCollectionObject(collectionId);
+    const collection = await uniqueHelper.nft.mintCollection(alice, {name: 't1', description: 't1', tokenPrefix: 'tst'});
 
     const tokenId = (await collection.mintToken(alice, bob.address)).tokenId;
 
@@ -248,7 +246,7 @@ describe('Minting tests', () => {
   });
 
   it('Test burn (empty collection)', async() => {
-    const collectionToBurn = await uniqueHelper.mintNFTCollection(alice, collectionOptions)
+    const collectionToBurn = await uniqueHelper.nft.mintCollection(alice, collectionOptions)
     let result = await collectionToBurn.burn(alice);
     await expect(result).toBe(true);
     await expect(await collectionToBurn.getData()).toBeNull();

@@ -37,36 +37,14 @@ class UniqueExporter {
     return path.join(this.exportPath, `export_collection_${collectionId}.json`);
   }
 
-  async getTokenOld(collectionId, tokenId, blockHashAt) {
-    // TODO: remove this, backwards compatibility
-    let token = {};
-    if(!blockHashAt) {
-      token = await this.uniqueHelper.api.query.nonfungible.tokenData(collectionId, tokenId);
-    }
-    else {
-      token = await this.uniqueHelper.api.query.nonfungible.tokenData(collectionId, tokenId, blockHashAt);
-    }
-    token = token.toHuman();
-    let tokenData = {owner: token.owner, properties: [{key: '_old_constData', value: token.constData}]};
-    console.log(tokenData);
-    if (tokenData === null || tokenData.owner === null) return null;
-    let owner = {};
-    for (let key of Object.keys(tokenData.owner)) {
-      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() === 'substrate' ? this.uniqueHelper.util.normalizeSubstrateAddress(tokenData.owner[key]) : tokenData.owner[key];
-    }
-    tokenData.normalizedOwner = owner;
-    return tokenData;
-  }
-
   async *genTokenData(collectionData, startToken=1) {
     let tokenId = startToken;
 
     const tokensCount = collectionData.tokensCount;
-    const isLegacy = !collectionData.raw.hasOwnProperty('tokenPropertyPermissions');
-    const propertyKeys = isLegacy ? null : collectionData.raw.tokenPropertyPermissions.map(x => x.key);
+    const propertyKeys = collectionData.raw.tokenPropertyPermissions.map(x => x.key);
 
     while (true) {
-      const tokenData = await (isLegacy ? this.getTokenOld(collectionData.id, tokenId, this.blockNumber) : this.uniqueHelper.getToken(collectionData.id, tokenId, this.blockNumber, propertyKeys));
+      const tokenData = await this.uniqueHelper.nft.getToken(collectionData.id, tokenId, this.blockNumber, propertyKeys);
       if(!tokenData) {
         if(tokenId >= tokensCount) break;
         tokenId++;
@@ -79,7 +57,7 @@ class UniqueExporter {
   }
 
   async genCollectionData(collectionId) {
-    return await this.uniqueHelper.getCollection(collectionId);
+    return await this.uniqueHelper.collection.getData(collectionId);
   }
 
   async getAllTokens(collectionData) {

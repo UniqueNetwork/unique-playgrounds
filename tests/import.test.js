@@ -19,21 +19,21 @@ describe('Import helper tests', () => {
 
   const createCollection = async () => {
     const dave = uniqueHelper.util.fromSeed('//Dave');
-    collectionId = (await uniqueHelper.mintNFTCollection(alice, {
+    collectionId = (await uniqueHelper.nft.mintCollection(alice, {
       name: 'to import', description: 'collection id to import', tokenPrefix: 'imp',
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
     })).collectionId;
     const bob = uniqueHelper.util.fromSeed('//Bob');
     const charlie = uniqueHelper.util.fromSeed('//Charlie');
-    await uniqueHelper.mintMultipleNFTTokens(alice, collectionId, [
+    await uniqueHelper.nft.mintMultipleTokens(alice, collectionId, [
       {owner: {substrate: bob.address}, properties: [{key: 'name', value: 'Bob'}]},
       {owner: {Substrate: alice.address}, properties: [{key: 'name', value: 'Alice'}]}
     ]);
-    const toBurn = await uniqueHelper.mintNFTToken(alice, {collectionId, owner: alice.address});
+    const toBurn = await uniqueHelper.nft.mintToken(alice, {collectionId, owner: alice.address});
     await toBurn.burn(alice);
-    await uniqueHelper.mintNFTToken(alice, {collectionId, owner: charlie.address, properties: [{key: 'name', value: 'Charlie'}]});
-    await uniqueHelper.addNFTCollectionAdmin(alice, collectionId, {Substrate: dave.address});
-    await uniqueHelper.changeNFTCollectionOwner(alice, collectionId, bob.address);
+    await uniqueHelper.nft.mintToken(alice, {collectionId, owner: charlie.address, properties: [{key: 'name', value: 'Charlie'}]});
+    await uniqueHelper.collection.addAdmin(alice, collectionId, {Substrate: dave.address});
+    await uniqueHelper.collection.changeOwner(alice, collectionId, bob.address);
   }
 
   const expectedState = {
@@ -81,7 +81,7 @@ describe('Import helper tests', () => {
     });
 
     let collection = await exporter.genCollectionData(state.id);
-    await expect({...collectionData.raw, owner: await uniqueHelper.normalizeSubstrateAddressToChainFormat(alice.address)}).toEqual({...collection.raw});
+    await expect({...collectionData.raw, owner: await uniqueHelper.address.normalizeSubstrateToChainFormat(alice.address)}).toEqual({...collection.raw});
 
     await importer.createTokens(collectionData, tokens);
 
@@ -116,7 +116,7 @@ describe('Import helper tests', () => {
   it('Import to existed collection (Only collection)', async () => {
     let collectionData = await exporter.genCollectionData(collectionId);
 
-    let existedCollectionId = (await uniqueHelper.mintNFTCollection(alice, {
+    let existedCollectionId = (await uniqueHelper.nft.mintCollection(alice, {
       name: 'existed to import', description: 'existed collection id to import', tokenPrefix: 'eimp',
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: false, collectionAdmin: true, tokenOwner: false}}]
     })).collectionId;

@@ -21,9 +21,9 @@ describe('Minting tests', () => {
 
     alice = uniqueHelper.util.fromSeed(config.mainSeed);
     bob = uniqueHelper.util.fromSeed('//Bob');
-    await uniqueHelper.transferBalanceToSubstrateAccount(alice, bob.address, 10n * await uniqueHelper.getOneTokenNominal());
+    await uniqueHelper.balance.transferToSubstrate(alice, bob.address, 10n * await uniqueHelper.balance.getOneTokenNominal());
 
-    collection = await uniqueHelper.mintNFTCollection(alice, {
+    collection = await uniqueHelper.nft.mintCollection(alice, {
       name: 'to test', description: 'to test token interface', tokenPrefix: 'ttti',
       tokenPropertyPermissions: [{key: 'name', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}}]
     });

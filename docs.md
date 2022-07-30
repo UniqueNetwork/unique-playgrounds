@@ -217,7 +217,7 @@ let success = await uniqueHelper.balance.transferToSubstrate(signer, '5FHneW46xG
 ## Collection group
 
 
-### getTotalCollectionsCount
+### getTotalCount
 ```typescript
 async getTotalCount(): Promise<Number>
 ```
@@ -502,7 +502,7 @@ let result = await collection.setPermissions(signer, {mintMode: false});
 async enableNesting(signer: IKeyringPair, collectionId: Number, permissions: {tokenOwner: boolean, collectionAdmin: boolean, restricted: null | Number[]}): Promise<boolean>
 ```
 
-Enables nesting for selected collection. If `restrictedCollectionIds` set, you can nest only tokens from specified collections. Returns bool true on success.
+Enables nesting for selected collection. If `restricted` set, you can nest only tokens from specified collections. Returns bool true on success.
 
 Example:
 ```javascript
@@ -584,9 +584,7 @@ let result = await collection.deleteProperties(signer, ['is_substrate']);
 async burn(signer: IKeyringPair, collectionId: Number): Promise<boolean>
 ```
 
-Burns the collection if the signer has sufficient permissions. The result is the `common` event.
-
-CollectionDestroyed
+Burns the collection if the signer has sufficient permissions and collection is empty. Returns bool true on success.
 
 Example:
 ```javascript

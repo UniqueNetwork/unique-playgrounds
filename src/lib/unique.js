@@ -306,11 +306,14 @@ class ChainHelperBase {
             if (result.hasOwnProperty('dispatchError')) {
               const dispatchError = result['dispatchError'];
 
-              if (dispatchError.isModule) {
+              if (dispatchError && dispatchError.isModule) {
                 const modErr = dispatchError.asModule;
                 const errorMeta = dispatchError.registry.findMetaError(modErr);
 
                 moduleError = `${errorMeta.section}.${errorMeta.name}`;
+              }
+              else {
+                this.logger.log(result, this.logger.level.ERROR);
               }
             }
 
@@ -420,7 +423,7 @@ class CollectionGroup extends HelperGroup {
   }
 
   async getTotalCount() {
-    return (await this.callRpc('api.rpc.unique.collectionStats')).created.toNumber();
+    return (await this.helper.callRpc('api.rpc.unique.collectionStats')).created.toNumber();
   }
 
   async getData(collectionId) {
@@ -538,7 +541,7 @@ class CollectionGroup extends HelperGroup {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setCollectionPermissions', [collectionId, permissions],
-      `Unable to set collection permissions for ${label}`
+      true, `Unable to set collection permissions for ${label}`
     );
 
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'unique', 'CollectionPermissionSet', label);
@@ -769,7 +772,7 @@ class NFTGroup extends NFTnRFT {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createMultipleItems', [collectionId, {Substrate: owner}, rawTokens],
-      `Unable to mint NFT tokens for ${label}`
+      true, `Unable to mint NFT tokens for ${label}`
     );
     const collection = this.getCollectionObject(collectionId);
     return this.helper.util.extractTokensFromCreationResult(creationResult, label).tokens.map(x => collection.getTokenObject(x.tokenId));

@@ -3,6 +3,7 @@ node_modules
 tmp
 package-lock.json
 src/playgrounds/*.dev.js
+tests/*.dev.js
 tests/config/*
 !tests/config/global.js
 !tests/config/index.js
